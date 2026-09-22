@@ -6,3 +6,7 @@ results/*.log
 results/*.sh
 results/*/summary.before_speed.json
 .venv-judge/
+
+# meeting material never belongs in the repo
+*transcript*
+*Transcript*
