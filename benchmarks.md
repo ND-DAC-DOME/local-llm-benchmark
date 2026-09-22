@@ -18,19 +18,19 @@
 
 **How we run them**
 
-- GSM8K and MMLU-Pro: a fixed random sample of 200 items from the test split (seed 1234), the same items for every model. HumanEval: all 164 problems.
-- Zero-shot, one chat turn per item. The model is asked to end with `Final answer: <number>` (GSM8K), `Answer: <letter>` (MMLU-Pro), or a single Python code block (HumanEval).
-- GSM8K and MMLU-Pro are graded by exact match against the gold answer. HumanEval is graded by actually executing the problem's unit tests against the model's code; a problem counts only if every test passes.
-- A response that hits the token limit (12,288) before giving an answer counts as wrong. The limit is the same for every model.
+- GSM8K and MMLU-Pro: a fixed random sample of 200 items from the test split (seed 1234), the same items for every model. HumanEval: all 164 problems. GPQA Diamond: all 198. LiveCodeBench v6: all 175.
+- Zero-shot, one chat turn per item. The model is asked to end with `Final answer: <number>` (GSM8K), `Answer: <letter>` (MMLU-Pro, GPQA), or a single Python code block (HumanEval, LiveCodeBench).
+- GSM8K, MMLU-Pro and GPQA are graded by exact match against the gold answer. HumanEval and LiveCodeBench are graded by executing the problem's tests against the model's code; a problem counts only if every test passes. LiveCodeBench is scored twice: with the standard library only (strict) and with numpy/scipy/numba available as on the real AtCoder judge (judge env, the headline).
+- A response that hits the token limit before giving an answer counts as wrong and is reported as "not finished". Two budgets were used, 12,288 and 32,768 tokens, always the same for every model in a comparison; the budget turned out to decide the ranking, so both are reported.
 - Same sampling for every model: temperature 1.0, top_p 0.95 (the recommendation in both vendors' model cards); top_k is each vendor's own recommendation.
-- Both models are 4-bit quantized (unsloth `UD-Q4_K_XL` GGUF), served with llama.cpp.
-- Every prompt, response and verdict is saved to `results/<run>/<task>.jsonl` so scores can be audited.
+- Weights are 4-bit: unsloth `UD-Q4_K_XL` GGUF on llama.cpp for Muse and Qwen3.6; unsloth NVFP4 on vLLM for Qwen3.8 (the checkpoint the DGX Spark serves); NVIDIA's NVFP4 Muse for the quantization check. See `MODELS.md`.
+- Every prompt, reasoning trace, response and verdict is saved to `results/<run>/<task>.jsonl` so scores can be audited.
 
 **Caveats**
 
-- Our prompts and answer parsers are our own, so these scores are not directly comparable to public leaderboards (which use different prompt formats, few-shot examples, etc.). They are meant for comparing models against each other under identical conditions.
-- With 200 items the 95% margin of error is roughly ±3 to ±5 percentage points, depending on the score. Differences inside that margin should be read as a tie.
-- GSM8K and HumanEval are close to saturated for current models of this size, so they work mainly as sanity checks. MMLU-Pro has more room to separate models.
+- Our prompts and answer parsers are our own, so these scores are not directly comparable to public leaderboards (which use different prompt formats, few-shot examples and larger budgets). They are meant for comparing models against each other under identical conditions.
+- With ~200 items the 95% margin of error is roughly ±3 to ±6 percentage points, depending on the score. Measured directly: the same model run three times spread by ±1.5 points. Differences inside that margin should be read as a tie.
+- GSM8K and HumanEval are close to the ceiling for models of this class (96-99%), so they work as sanity checks. MMLU-Pro, GPQA Diamond and LiveCodeBench have room to separate models; AIME was considered and dropped (vendors report 94-95%).
 - None of these is an agentic software-engineering test. For SWE-bench numbers published by the vendors, see `swe-bench-cards.md`.
 
-Links checked on 2026-09-17: all resolve, and the arXiv titles match.
+Links checked on 2026-09-17 (first three) and 2026-09-22 (GPQA, LiveCodeBench): all resolve, and the arXiv titles match.

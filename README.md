@@ -38,7 +38,7 @@ A small, auditable test bed for comparing locally served models under identical 
 | 8 | `qwen3.8-27b-nvfp4-a6000-mtp-32k`, `muse-glimmer-30b-q4-dflash-32k` | as runs 3 and 7 | vLLM / llama.cpp | A6000 | MTP / DFlash. **GPQA Diamond (198) and LiveCodeBench v6 (175)** at a 32k budget, then speed on the same servers. AIME was dropped (vendors report 94–95%: no headroom); Qwen3.6 left out by decision. |
 | 7 | `muse-glimmer-30b-q4-dflash`, `muse-glimmer-30b-nvfp4-a6000-dflash` (15 draft tokens), `...-dflash5` (5) | as runs 1, 4 | llama.cpp / vLLM | A6000 | **speed only**, with speculative decoding: DFlash (unsloth `dflash-kquant.gguf` for llama.cpp, `meta-models/Muse-Glimmer-30B-assistant` for vLLM). Qwen3.6 `draft-mtp` was attempted and cannot run: the unsloth GGUF has no MTP layers. |
 
-Common settings: temperature 1.0, top_p 0.95 (both vendors' recommendation), seed 1234, 200 fixed items for GSM8K and MMLU-Pro (seed 1234), all 164 HumanEval, 12,288 completion tokens unless the run name says `32k`, 3 requests in flight. Muse gets the system prompt `Reasoning strength: high` and top_k 64; Qwens run in their default thinking mode with top_k 20. Reasoning is returned separately by the server and is never scored.
+Common settings: temperature 1.0, top_p 0.95 (both vendors' recommendation), seed 1234, 200 fixed items for GSM8K and MMLU-Pro, all 164 HumanEval, all 198 GPQA Diamond, all 175 LiveCodeBench v6; 12,288 completion tokens unless the run name says `32k`; 3 requests in flight (2 for Muse on the hard tasks). Muse gets the system prompt `Reasoning strength: high` and top_k 64; Qwens run in their default thinking mode with top_k 20. Reasoning is returned separately by the server and is never scored.
 
 ## Reproducing
 
