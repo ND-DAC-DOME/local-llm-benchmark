@@ -5,12 +5,16 @@
 | GSM8K | Grade-school math word problems (1,319 test items) | https://huggingface.co/datasets/openai/gsm8k | https://arxiv.org/abs/2110.14168 | https://github.com/openai/grade-school-math |
 | MMLU-Pro | 10-option multiple choice across 14 subjects (~12k items) | https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro | https://arxiv.org/abs/2406.01574 | https://github.com/TIGER-AI-Lab/MMLU-Pro |
 | HumanEval | 164 Python functions, graded by running unit tests | https://huggingface.co/datasets/openai/openai_humaneval | https://arxiv.org/abs/2107.03374 | https://github.com/openai/human-eval |
+| GPQA Diamond | 198 graduate-level science questions, 4 options | https://huggingface.co/datasets/hendrydong/gpqa_diamond_mc (ungated mirror) | https://arxiv.org/abs/2311.12022 | https://github.com/idavidrein/gpqa |
+| LiveCodeBench v6 | 175 competitive-programming problems (contests Jan–Apr 2025), graded by running all tests | https://huggingface.co/datasets/livecodebench/code_generation_lite (`test6.jsonl`) | https://arxiv.org/abs/2403.07974 | https://github.com/LiveCodeBench/LiveCodeBench |
 
 **Papers**
 
 - GSM8K: "Training Verifiers to Solve Math Word Problems" (OpenAI, 2021).
 - MMLU-Pro: "MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark" (TIGER-Lab, 2024).
 - HumanEval: "Evaluating Large Language Models Trained on Code" (OpenAI, 2021). This is the Codex paper; HumanEval was introduced in it.
+- GPQA: "GPQA: A Graduate-Level Google-Proof Q&A Benchmark" (2023).
+- LiveCodeBench: "LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code" (2024).
 
 **How we run them**
 
