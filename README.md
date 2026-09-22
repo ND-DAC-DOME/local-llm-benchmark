@@ -116,3 +116,7 @@ To publish on GitHub Pages: repository Settings → Pages → "Deploy from a bra
 - `UD-Q4_K_XL` is a dynamic quant (per-layer bit allocation differs between models); `nvidia/Muse-Glimmer-30B-NVFP4` is ModelOpt AutoQuant (mixed NVFP4/FP8/BF16 chosen by search); `unsloth/Qwen3.8-27B-NVFP4` is mixed precision: NVFP4 MLPs in layers 0-55 (8.4 GB), FP8 MLPs in layers 56-63 (2.1 GB), FP8 attention projections and `lm_head` (8.5 GB), BF16 embeddings / MTP head / vision encoder. None of the pairs is bit-for-bit "the same quantization".
 - Speed depends on runtime; compare speed only within the same runtime, or the same model+runtime across machines.
 - No agentic / SWE-bench-style task yet.
+
+## License
+
+Apache-2.0. `patches/humming_utils.py` is a modified file from vLLM (Apache-2.0); see `patches/README.md`.
