@@ -2,7 +2,16 @@
 
 A small, auditable test bed for comparing locally served models under identical conditions: same questions, same prompts, same sampling, same token budget, with every prompt, reasoning trace, answer and verdict saved to disk.
 
-**Report site:** https://nd-dac-dome.github.io/local-llm-benchmark/ (the findings, navigable, with a question explorer). Same content as text in [`results.md`](results.md); source in [`site/`](site/). What the datasets are and how they are graded: [`benchmarks.md`](benchmarks.md). Vendor-published SWE-bench numbers (not reproduced by us): [`swe-bench-cards.md`](swe-bench-cards.md).
+**Report site:** https://nd-dac-dome.github.io/local-llm-benchmark/ — the findings, navigable, with a question explorer. The same content as text: [`results.md`](results.md).
+
+## Findings in short
+
+- Given enough room to finish thinking (32k tokens per answer), the three models are equivalent: MMLU-Pro 82 / 82 / 80% (Muse / Qwen3.6 / Qwen3.8), GPQA Diamond 80 vs 80% (Muse vs Qwen3.8).
+- With a tighter budget (12k) Muse is ahead (MMLU-Pro 82% vs 73–77%), because the Qwens run out of tokens before answering, not because they reason worse. On LiveCodeBench Qwen3.8 does not finish 38% of the problems even at 32k (Muse 79%, Qwen3.8 60%).
+- The Qwens use 2–3× the tokens per answer to reach the same score. Which model is "better" depends on how long an answer may take in the intended use.
+- Quantization, speculative decoding (MTP / DFlash) and the machine (A6000 vs DGX Spark) do not change the scores; they change speed. Same model and recipe: 50.8 tok/s on the A6000, 20.3 on the Spark.
+
+Datasets and grading: [`benchmarks.md`](benchmarks.md). Vendor-published SWE-bench numbers (not reproduced here): [`swe-bench-cards.md`](swe-bench-cards.md).
 
 ## Layout
 
@@ -21,7 +30,7 @@ A small, auditable test bed for comparing locally served models under identical 
 | `tools/check_prefix_cache.py`, `tools/prefix_cache_scenarios.py`, `tools/spark_inspect.sh` | Latency-based prefix-cache checks for any vLLM server (robust to other users; five usage patterns; `--long` for the 129k-token test) and a read-only inspection of a vLLM server's `/metrics`. Used on the Spark and in run 9. |
 | `docs/spark-measurements.md` | Provenance of every Spark number in `results.md`: the exact command behind each one. |
 | `MODELS.md`, `verify_models.sh` | Model repositories, snapshots and SHA-256 of the GGUF files; script to verify a local cache against them. |
-| `docs/spark-qwen3.8-27b-recipe.yaml` | The DGX Spark's serving recipe that runs 2, 3 and 5 are derived from. Verified on 2026-09-19 against the live `vllm serve` process on the Spark (identical arguments; 70.6 GB of unified memory at `--gpu-memory-utilization 0.55`). No other model server and no Muse-Glimmer weights exist on the Spark. The Spark's snapshot is `57926ba` (weights identical to `f0b7c9e`), its vLLM is 0.26.1 dev with native NVFP4 kernels. |
+| `docs/spark-qwen3.8-27b-recipe.yaml` | The DGX Spark's serving recipe that runs 2, 3 and 5 derive from; verified against the live server (details in `docs/spark-measurements.md`). |
 | `results/<run>/` | `summary.json` (scores + config), `<task>.jsonl` (one line per item: prompt id, reasoning, answer, verdict, tokens, seconds), `speed.json`, `errors.log` if any. |
 
 ## Configurations that were run
@@ -35,8 +44,9 @@ A small, auditable test bed for comparing locally served models under identical 
 | 4 | `muse-glimmer-30b-nvfp4-a6000` | `nvidia/Muse-Glimmer-30B-NVFP4` @ `4781837` | vLLM 0.29.0 | A6000 | none (NVIDIA vLLM recipe) |
 | 5 | `qwen3.8-27b-nvfp4-spark` | `unsloth/Qwen3.8-27B-NVFP4` | vLLM (Spark image) | DGX Spark, over the network | MTP, 3 tokens |
 | 6 | `qwen3.6-27b-q4-32k` | `unsloth/Qwen3.6-27B-GGUF:UD-Q4_K_XL` | llama.cpp | A6000 | none; all tasks with a 32k budget |
-| 8 | `qwen3.8-27b-nvfp4-a6000-mtp-32k`, `muse-glimmer-30b-q4-dflash-32k` | as runs 3 and 7 | vLLM / llama.cpp | A6000 | MTP / DFlash. **GPQA Diamond (198) and LiveCodeBench v6 (175)** at a 32k budget, then speed on the same servers. AIME was dropped (vendors report 94–95%: no headroom); Qwen3.6 left out by decision. |
 | 7 | `muse-glimmer-30b-q4-dflash`, `muse-glimmer-30b-nvfp4-a6000-dflash` (15 draft tokens), `...-dflash5` (5) | as runs 1, 4 | llama.cpp / vLLM | A6000 | **speed only**, with speculative decoding: DFlash (unsloth `dflash-kquant.gguf` for llama.cpp, `meta-models/Muse-Glimmer-30B-assistant` for vLLM). Qwen3.6 `draft-mtp` was attempted and cannot run: the unsloth GGUF has no MTP layers. |
+| 8 | `qwen3.8-27b-nvfp4-a6000-mtp-32k`, `muse-glimmer-30b-q4-dflash-32k` | as runs 3 and 7 | vLLM / llama.cpp | A6000 | MTP / DFlash. **GPQA Diamond (198) and LiveCodeBench v6 (175)** at a 32k budget, then speed on the same servers. AIME was dropped (vendors report 94–95%: no headroom); Qwen3.6 left out by decision. |
+| 9 | (no scores; log in `results/run_09_prefix_cache.log`) | `unsloth/Qwen3.8-27B-NVFP4` | vLLM 0.29.0 | A6000 | **prefix-cache check**, MTP on and off, five usage patterns; the same check on the Spark is in `docs/spark-measurements.md`. |
 
 Common settings: temperature 1.0, top_p 0.95 (both vendors' recommendation), seed 1234, 200 fixed items for GSM8K and MMLU-Pro, all 164 HumanEval, all 198 GPQA Diamond, all 175 LiveCodeBench v6; 12,288 completion tokens unless the run name says `32k`; 3 requests in flight (2 for Muse on the hard tasks). Muse gets the system prompt `Reasoning strength: high` and top_k 64; Qwens run in their default thinking mode with top_k 20. Reasoning is returned separately by the server and is never scored.
 
@@ -56,12 +66,12 @@ printf 'HF_CACHE=/path/to/huggingface/cache\nSPARK_URL=http://<spark-host>:18300
 ./runs/02_vllm_qwen3.8_nvfp4_no_mtp.sh   # ~4 h
 GPU=1 ./runs/03_vllm_qwen3.8_nvfp4_mtp.sh   # needs a free 48 GB GPU
 ./runs/04_vllm_muse_nvfp4.sh             # ~4 h
-SPARK=http://<spark>:18300/v1 ./runs/05_spark_qwen3.8.sh
+./runs/05_spark_qwen3.8.sh                # uses SPARK_URL from config.local.env
 ./runs/06_gguf_qwen3.6_mmlu_32k.sh
 ./runs/07_speculative_speed.sh          # needs both GPUs free
 ./runs/08_hard_tasks.sh                 # GPQA Diamond + LiveCodeBench v6 at 32k, then speed; needs both GPUs free
 ./runs/09_prefix_cache_vllm029.sh       # prefix-cache check, vLLM 0.29 + MTP on/off (~20 min, one GPU)
-.venv/bin/python compare.py
+uv run compare.py
 ```
 
 Every script serves the model in a Docker container with a host-RAM cap (8 GB for llama.cpp, 16 GB for vLLM), runs `bench.py`, and removes the container. `bench.py` resumes from the saved `.jsonl` files, so an interrupted run can simply be restarted. Model weights are pulled from Hugging Face into `$HF_CACHE` (see `config.env`); exact snapshots and file hashes are in [`MODELS.md`](MODELS.md).
@@ -69,31 +79,28 @@ Every script serves the model in a Docker container with a host-RAM cap (8 GB fo
 To benchmark any other OpenAI-compatible server:
 
 ```bash
-.venv/bin/python bench.py --base-url http://host:port/v1 --model <served name> --run-name <name> \
+uv run bench.py --base-url http://host:port/v1 --model <served name> --run-name <name> \
   --limit 200 --temperature 1.0 --top-p 0.95 --max-tokens 12288 --concurrency 3 [--system "..."]
 ```
 
 ## How things are measured
 
-- **GSM8K / MMLU-Pro:** zero-shot, one chat turn per item. The prompt asks for a final line `Final answer: <number>` / `Answer: <letter>`; the last such line is compared with the gold answer. An answer that hits the token limit without a final line counts as wrong.
-- **HumanEval:** the model returns the function in a code block; the harness prepends the original prompt (imports, helper functions, signature) and executes the problem's unit tests in a subprocess with a 20 s timeout. Pass = all tests pass.
-- **Decode speed / TTFT:** one short prompt, `max_tokens=512`, streaming, 3 sequential requests; `completion_tokens / (last chunk − first chunk)`; median.
-- **Prefill:** prompts of ~1k, ~4k and ~12k tokens (GSM8K text), `max_tokens=1`, streaming; `prompt_tokens / time to first token`; 3 repetitions each with a unique nonce so prefix caching cannot serve a repeat; median.
-- **GPQA Diamond:** 198 four-option questions (ungated mirror `hendrydong/gpqa_diamond_mc`), graded on the last `Answer: <letter>` or `\\boxed{<letter>}`.
-- **LiveCodeBench v6:** the 175 problems of `test6.jsonl` (contests 2025-01-04 to 2025-04-06; 112 AtCoder stdin/stdout, 63 LeetCode call-based). The program must pass every public and private test (6 s per test); output compared line by line, tolerant to float formatting. stdin programs run exactly as written; call-based ones get a typing/collections header. Two scores are reported: **strict** (programs executed with the benchmark's own interpreter, standard library only) and **judge env** (executed with `.venv-judge`: numpy, scipy, numba, networkx, sortedcontainers, i.e. what a real AtCoder judge offers; the `judge` group in `pyproject.toml`). The judge-env score is the headline; 23 of Muse's strict failures were solutions that `import numba`. `rescore_livecodebench.py` re-grades saved answers under both without regenerating anything.
-- Token counts come from the server's `usage` field, never estimated.
-- Every wrong answer of every run was inspected (truncated vs. wrong vs. parser miss); see `results.md`.
+Grading per task, prompts, budgets and the two LiveCodeBench judge environments are in [`benchmarks.md`](benchmarks.md). Speed:
+
+- **Decode / TTFT:** one short prompt, 512 tokens, streaming, 3 sequential requests; tokens ÷ (last chunk − first chunk); median.
+- **Prefill:** prompts of ~1k, ~4k and ~12k tokens with `max_tokens=1`; prompt tokens ÷ time to first token; 3 repetitions, each with a unique prefix so a prefix cache cannot serve a repeat; median.
+- Token counts come from the server's `usage` field, never estimated. Every wrong answer of every run was inspected (not finished / wrong / parser miss); see `results.md`.
 
 ## Report site
 
 `site/` is a static site (plain HTML + JavaScript, Chart.js from a CDN) with the findings organised for two readers: a summary and question explorer for deciding, and speed / method / caveats / all-numbers pages for checking. It reads JSON generated from `results/`:
 
 ```bash
-.venv/bin/python site/build.py      # regenerate site/data/ after any new run (never writes LiveCodeBench private tests)
+uv run site/build.py                 # regenerate site/data/ after any new run (never writes LiveCodeBench private tests)
 python3 -m http.server -d site 8000  # preview at http://localhost:8000
 ```
 
-To publish on GitHub Pages: repository Settings → Pages → "Deploy from a branch", branch `main`, folder `/site`. The explorer fetches `site/data/` files relative to the page, so it works from Pages, from a local server, and from any static host.
+It is published to GitHub Pages by `.github/workflows/pages.yml`, which uploads `site/` on every push that touches it (Pages must be set to "GitHub Actions" as the source; the branch mode only accepts `/` or `/docs`). The explorer fetches `site/data/` files relative to the page, so it also works from a local server or any static host.
 
 ## What "reproducible" means here
 
