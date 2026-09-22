@@ -1,0 +1,45 @@
+{
+  "config": {
+    "base_url": "http://localhost:8007/v1",
+    "model": "muse-glimmer-30b-q4",
+    "run_name": "muse-glimmer-30b-q4-dflash",
+    "api_key": "none",
+    "tasks": "speed",
+    "limit": 200,
+    "system": "Reasoning strength: high",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 8192,
+    "concurrency": 1,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-19 16:37:11",
+  "tasks": {
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.159,
+        "median_decode_tok_s_per_stream": 56.46,
+        "aggregate_tok_s": 52.62
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1038,
+          "median_ttft_s": 1.512,
+          "median_prefill_tok_s": 717.5
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4051,
+          "median_ttft_s": 5.534,
+          "median_prefill_tok_s": 732.0
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 11973,
+          "median_ttft_s": 10.54,
+          "median_prefill_tok_s": 1137.6
+        }
+      }
+    }
+  }
+}

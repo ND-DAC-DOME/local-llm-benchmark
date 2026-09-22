@@ -1,0 +1,75 @@
+{
+ "gsm8k": {
+  "n": 200,
+  "columns": [
+   "muse@12k",
+   "qwen36@12k",
+   "qwen38@12k"
+  ],
+  "categories": []
+ },
+ "mmlu_pro": {
+  "n": 200,
+  "columns": [
+   "muse@12k",
+   "qwen36@12k",
+   "qwen38@12k",
+   "qwen36@32k",
+   "qwen38@32k"
+  ],
+  "categories": [
+   "biology",
+   "business",
+   "chemistry",
+   "computer science",
+   "economics",
+   "engineering",
+   "health",
+   "history",
+   "law",
+   "math",
+   "other",
+   "philosophy",
+   "physics",
+   "psychology"
+  ]
+ },
+ "humaneval": {
+  "n": 164,
+  "columns": [
+   "muse@12k",
+   "qwen36@12k",
+   "qwen38@12k",
+   "qwen36@32k",
+   "qwen38@32k"
+  ],
+  "categories": []
+ },
+ "gpqa_diamond": {
+  "n": 198,
+  "columns": [
+   "muse@32k",
+   "qwen38@32k"
+  ],
+  "categories": [
+   "Biology",
+   "Chemistry",
+   "Physics"
+  ]
+ },
+ "livecodebench": {
+  "n": 175,
+  "columns": [
+   "muse@32k",
+   "qwen38@32k"
+  ],
+  "categories": [
+   "atcoder/easy",
+   "atcoder/hard",
+   "atcoder/medium",
+   "leetcode/easy",
+   "leetcode/hard",
+   "leetcode/medium"
+  ]
+ }
+}

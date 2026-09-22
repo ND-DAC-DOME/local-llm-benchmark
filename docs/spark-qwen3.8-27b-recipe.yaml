@@ -1,0 +1,41 @@
+# Copy of the DGX Spark serving recipe for Qwen3.8-27B (as provided by the team on 2026-09-18).
+recipe_version: "2"
+model: unsloth/Qwen3.8-27B-NVFP4
+runtime: vllm
+container: ghcr.io/spark-arena/dgx-vllm-eugr-nightly:latest
+
+defaults:
+  port: 18300
+  host: 0.0.0.0
+  served_model_name: qwen3.8-27b
+  gpu_memory_utilization: 0.55
+  max_model_len: 262144
+  max_num_seqs: 4
+  max_num_batched_tokens: 16384
+  load_format: instanttensor
+  kv_cache_dtype: fp8
+  attention_backend: flashinfer
+  reasoning_parser: qwen3
+  tool_call_parser: qwen3_coder
+  speculative_config: '{"method": "mtp", "num_speculative_tokens": 3}'
+
+env:
+  VLLM_MARLIN_USE_ATOMIC_ADD: "1"
+
+command: |
+  vllm serve {model} \
+    --host {host} \
+    --port {port} \
+    --served-model-name {served_model_name} \
+    --gpu-memory-utilization {gpu_memory_utilization} \
+    --max-model-len {max_model_len} \
+    --max-num-seqs {max_num_seqs} \
+    --max-num-batched-tokens {max_num_batched_tokens} \
+    --load-format {load_format} \
+    --kv-cache-dtype {kv_cache_dtype} \
+    --attention-backend {attention_backend} \
+    --reasoning-parser {reasoning_parser} \
+    --enable-auto-tool-choice \
+    --tool-call-parser {tool_call_parser} \
+    --speculative-config '{speculative_config}' \
+    --enable-prefix-caching

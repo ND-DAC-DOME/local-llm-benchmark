@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">Speed</div>
+<h1>How fast each setup answers, and why</h1>
+<p class="lede">Decode speed is tokens generated per second for one request on an otherwise idle server; prefill is how fast the prompt is read before the first token. Both measured by the same script on every server, with unique prompts so caches cannot inflate them.</p>
+
+<h2>Speculative decoding speeds up without changing answers</h2>
+<p class="claim">Qwen3.8 + MTP: 31.8 → 50.8 tok/s. Muse + DFlash: 38.5 → 56.5 tok/s.</p>
+<figure><div class="legend" id="lg1"></div><div class="chart"><canvas id="c1"></canvas></div>
+<figcaption>A6000, single request. A small "drafter" proposes tokens and the model verifies them in one pass; the output distribution is unchanged, and the scores confirm it: Qwen3.8 with vs without MTP scored 97.5 vs 98.0 (GSM8K), 77.0 vs 74.5 (MMLU-Pro), 97.0 vs 94.5 (HumanEval), all within noise. MTP is Qwen's built-in head; DFlash is Meta's separate drafter for Muse. On vLLM this A6000 could not make DFlash pay off for Muse (25% draft acceptance); the number above is llama.cpp.</figcaption></figure>
+
+<h2>The A6000 decodes 2.5× faster than the Spark; prefill is about equal</h2>
+<p class="claim">Same checkpoint, same vLLM recipe, MTP on both: 50.8 vs 20.3 tok/s.</p>
+<div class="tiles">
+  <div class="tile"><div class="label">Decode, A6000</div><div class="value num" id="t1"></div><div class="sub">tok/s, Qwen3.8 NVFP4 + MTP</div></div>
+  <div class="tile"><div class="label">Decode, DGX Spark</div><div class="value num" id="t2"></div><div class="sub">tok/s, same model and recipe</div></div>
+  <div class="tile"><div class="label">Time to first token, ~10k-token system prompt</div><div class="value num" id="t3"></div><div class="sub">both machines, roughly</div></div>
+</div>
+<figure><div class="legend" id="lg2"></div><div class="chart"><canvas id="c2"></canvas></div>
+<figcaption>Prefill throughput by prompt length. The Spark is faster on short prompts and slower on long ones; for a 40,000-character system prompt (~10k tokens) both start answering in 6–9 s. The Spark's config was verified: native FP4 kernels, MTP accepting 53% of drafted tokens (~2.6 tokens per pass). Its limit is memory bandwidth: only the MLPs of this checkpoint are NVFP4; all attention and the lm_head are FP8, so each step reads ~25 GB.</figcaption></figure>
+
+<h2>The prefix cache has no effect on the Spark's vLLM; it works on 0.29</h2>
+<p class="claim">Repeating a 20k-token prompt: 16.7 s again on the Spark; 1.7 s on vLLM 0.29 with MTP on.</p>
+<figure><div class="legend" id="lg3"></div><div class="chart tall"><canvas id="c3"></canvas></div>
+<figcaption>Time of the <em>second</em> request that shares its prefix with the first (bars), with the first request's time as reference (hollow marks). Same prompt twice, max_tokens=1, idle server. On the Spark (vLLM 0.26.1) no scenario hits, from 6k up to a 129k-token repeat (164.7 s vs 165.2 s). On vLLM 0.29 the cache works with MTP on (2× faster repeats; 1,600-token cache blocks) and better with it off (4×; 224-token blocks). A vLLM upgrade should restore caching on the Spark with MTP kept on.</figcaption></figure>
+
+<h2>All decode and prefill numbers</h2>
+<div class="tablewrap"><table><thead><tr><th>Configuration</th><th class="n">Decode tok/s</th><th class="n">TTFT</th><th class="n">Prefill ~1k</th><th class="n">~4k</th><th class="n">~12k</th></tr></thead><tbody id="tS"></tbody></table></div>
+<p class="note">Compare speed only within the same runtime (llama.cpp vs vLLM differ in prefill), or the same model and runtime across machines. Muse NVFP4 on vLLM carries two Ampere workarounds that cost it speed.</p>
+</main></div>
+<script>
+(async () => {
+  const S = await loadJSON('data/summary.json'); const c = COLORS(); const sp = S.speeds;
+  legend(document.getElementById('lg1'), [['Without speculative decoding', c.ink3], ['With (MTP / DFlash)', c.ink]]);
+  const cfg = [['Qwen3.8 NVFP4, vLLM', sp.qwen38_nomtp.decode, sp.qwen38_mtp.decode, c.qwen38], ['Muse Q4 GGUF, llama.cpp', sp.muse_q4.decode, sp.muse_q4_dflash.decode, c.muse]];
+  new Chart(document.getElementById('c1'), { type: 'bar', data: { labels: cfg.map(x => x[0]), datasets: [
+      { label: 'Without', ...bar(cfg.map(x => x[3] + '80')), data: cfg.map(x => x[1]) }, { label: 'With', ...bar(cfg.map(x => x[3])), data: cfg.map(x => x[2]) } ] },
+    options: baseChartOptions({ plugins: { legend: { display: false }, valueLabels: { enabled: true, format: v => v.toFixed(1) } }, scales: { x: { grid: { display: false } }, y: { min: 0, max: 70, title: { display: true, text: 'tokens / s' } } } }) });
+  document.getElementById('t1').textContent = sp.qwen38_mtp.decode.toFixed(1); document.getElementById('t2').textContent = sp.qwen38_spark.decode.toFixed(1); document.getElementById('t3').textContent = '6–9 s';
+  const sizes = ['1024', '4096', '12288'];
+  legend(document.getElementById('lg2'), [['A6000, vLLM 0.29 + MTP', c.qwen38], ['DGX Spark, vLLM 0.26.1 + MTP', c.ink3]]);
+  new Chart(document.getElementById('c2'), { type: 'line', data: { labels: sizes.map(s => '~' + (s / 1024 | 0) + 'k tokens'), datasets: [
+      { label: 'A6000', data: sizes.map(s => sp.qwen38_mtp.prefill[s]), borderColor: c.qwen38, backgroundColor: c.qwen38, borderWidth: 2, pointRadius: 5, pointBorderColor: c.surface, pointBorderWidth: 2, tension: 0 },
+      { label: 'Spark', data: sizes.map(s => sp.qwen38_spark.prefill[s]), borderColor: c.ink3, backgroundColor: c.ink3, borderWidth: 2, pointRadius: 5, pointBorderColor: c.surface, pointBorderWidth: 2, tension: 0 } ] },
+    options: baseChartOptions({ interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { mode: 'index', callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + ' tok/s' } } }, scales: { x: { grid: { display: false } }, y: { min: 0, max: 2500, title: { display: true, text: 'prefill tokens / s' } } } }) });
+  const pc = S.prefix_cache; const conds = Object.keys(pc.conditions); const shades = [c.ink3, c.qwen38, c.qwen38 + '80'];
+  legend(document.getElementById('lg3'), conds.map((k, i) => [k, shades[i]]));
+  new Chart(document.getElementById('c3'), { type: 'bar', data: { labels: pc.scenarios, datasets: conds.map((k, i) => ({ label: k, ...bar(shades[i]), data: pc.conditions[k].second })).concat(conds.map((k, i) => ({ label: k + ' (first request)', type: 'scatter', data: pc.conditions[k].first.map((v, j) => ({ x: j, y: v })), pointStyle: 'line', pointRadius: 9, pointBorderWidth: 2, borderColor: shades[i].slice(0, 7), backgroundColor: 'transparent', noLabel: true }))) },
+    options: baseChartOptions({ plugins: { legend: { display: false }, valueLabels: { enabled: true, format: v => v.toFixed(1) + 's' }, tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + (ctx.parsed.y).toFixed(2) + ' s' } } }, scales: { x: { grid: { display: false }, ticks: { autoSkip: false, maxRotation: 0, callback: (v, i) => pc.scenarios[i].split(', ') } }, y: { min: 0, max: 18, title: { display: true, text: 'seconds' } } } }) });
+  const rows = [['Muse Q4 GGUF, llama.cpp', 'muse_q4'], ['Muse Q4 GGUF + DFlash, llama.cpp', 'muse_q4_dflash'], ['Muse NVFP4, vLLM', 'muse_nvfp4'], ['Muse NVFP4 + DFlash, vLLM (15 draft tokens)', 'muse_nvfp4_dflash'],
+    ['Qwen3.6 Q4 GGUF, llama.cpp', 'qwen36_q4'], ['Qwen3.8 NVFP4, vLLM, no MTP', 'qwen38_nomtp'], ['Qwen3.8 NVFP4 + MTP, vLLM', 'qwen38_mtp'], ['Qwen3.8 NVFP4 + MTP, DGX Spark', 'qwen38_spark']];
+  document.getElementById('tS').innerHTML = rows.map(([n, k]) => { const s = sp[k]; return `<tr><td>${n}</td><td class="n">${s.decode.toFixed(1)}</td><td class="n">${s.ttft}s</td><td class="n">${(s.prefill['1024'] || '—').toLocaleString()}</td><td class="n">${(s.prefill['4096'] || '—').toLocaleString()}</td><td class="n">${(s.prefill['12288'] || '—').toLocaleString()}</td></tr>`; }).join('');
+})();
+</script></body></html>

@@ -1,0 +1,40 @@
+=== condition: mtp-on
+vLLM up on :8003
+non-default args: {'model_tag': 'unsloth/Qwen3.8-27B-NVFP4', 'enable_auto_tool_choice': True, 'tool_call_parser': 'qwen3_coder', 'model': 'unsloth/Qwen3.8-27B-NVFP4', 'revision': 'f0b7c9e722f5565102ff
+Hybrid model with EAGLE speculative decoding: defaulting prefix_cache_retention_interval to dense checkpointing.
+Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+Initializing a V1 LLM engine (v0.29.0) with config: model='unsloth/Qwen3.8-27B-NVFP4', speculative_config=SpeculativeConfig(method='mtp', model='unsloth/Qwen3.8-27B-NVFP4', num_spec_tokens=3), tokeniz
+Setting attention block size to 1600 tokens to ensure that attention page size is >= mamba page size.
+pair 1: 6074 prompt tokens | cold   3.23s | warm   1.58s | speed-up  2.0x | global hit counter +0 / +3200
+pair 2: 6074 prompt tokens | cold   3.21s | warm   1.59s | speed-up  2.0x | global hit counter +0 / +3200
+pair 3: 6074 prompt tokens | cold   3.22s | warm   1.59s | speed-up  2.0x | global hit counter +0 / +3200
+pair 4: 6074 prompt tokens | cold   3.24s | warm   1.60s | speed-up  2.0x | global hit counter +0 / +3200
+
+clean pairs used: 4/4 | median cold 3.23s | median warm 1.59s | speed-up 2.0x
+VERDICT: prefix cache is WORKING (repeating a prompt is at least 2x faster, consistently across fresh prompts).
+Note: the global hit counter also counts other users' requests; trust the latency figures above.
+A) exact repeat, ~6k tokens                             first   3.25s (6072 tok) | second   1.60s (6072 tok) | hits +0 / +3200
+B) exact repeat, first call generates 64 tokens         first   5.27s (6072 tok) | second   1.60s (6072 tok) | hits +0 / +3200
+C) exact repeat, ~20k tokens (chunked prefill)          first  11.58s (20072 tok) | second   1.70s (20072 tok) | hits +0 / +17600
+D) same ~6k system prompt, different question           first   3.29s (6079 tok) | second   1.62s (6076 tok) | hits +0 / +3200
+E) multi-turn continuation of a ~6k conversation        first   4.26s (6070 tok) | second   1.64s (6091 tok) | hits +3200
+=== condition: mtp-off
+vLLM up on :8003
+non-default args: {'model_tag': 'unsloth/Qwen3.8-27B-NVFP4', 'enable_auto_tool_choice': True, 'tool_call_parser': 'qwen3_coder', 'model': 'unsloth/Qwen3.8-27B-NVFP4', 'revision': 'f0b7c9e722f5565102ff
+Mamba cache mode is set to 'align' for Qwen3_5ForConditionalGeneration by default when prefix caching is enabled
+Initializing a V1 LLM engine (v0.29.0) with config: model='unsloth/Qwen3.8-27B-NVFP4', speculative_config=None, tokenizer='unsloth/Qwen3.8-27B-NVFP4', skip_tokenizer_init=False, tokenizer_mode=auto, r
+Setting attention block size to 1568 tokens to ensure that attention page size is >= mamba page size.
+pair 1: 6074 prompt tokens | cold   3.41s | warm   0.81s | speed-up  4.2x | global hit counter +0 / +4704
+pair 2: 6074 prompt tokens | cold   3.17s | warm   0.80s | speed-up  4.0x | global hit counter +0 / +4704
+pair 3: 6074 prompt tokens | cold   3.18s | warm   0.80s | speed-up  4.0x | global hit counter +0 / +4704
+pair 4: 6074 prompt tokens | cold   3.19s | warm   0.80s | speed-up  4.0x | global hit counter +0 / +4704
+
+clean pairs used: 4/4 | median cold 3.18s | median warm 0.80s | speed-up 4.0x
+VERDICT: prefix cache is WORKING (repeating a prompt is at least 2x faster, consistently across fresh prompts).
+Note: the global hit counter also counts other users' requests; trust the latency figures above.
+A) exact repeat, ~6k tokens                             first   3.20s (6072 tok) | second   0.81s (6072 tok) | hits +0 / +4704
+B) exact repeat, first call generates 64 tokens         first   5.01s (6072 tok) | second   0.82s (6072 tok) | hits +0 / +4704
+C) exact repeat, ~20k tokens (chunked prefill)          first  11.32s (20072 tok) | second   0.92s (20072 tok) | hits +0 / +18816
+D) same ~6k system prompt, different question           first   3.25s (6079 tok) | second   0.82s (6076 tok) | hits +0 / +4704
+E) multi-turn continuation of a ~6k conversation        first   5.05s (6072 tok) | second   0.83s (6093 tok) | hits +4704
+PREFIX CACHE CHECK DONE

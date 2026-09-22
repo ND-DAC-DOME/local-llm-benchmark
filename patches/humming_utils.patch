@@ -1,0 +1,32 @@
+--- a/vllm/model_executor/layers/quantization/utils/humming_utils.py
++++ b/vllm/model_executor/layers/quantization/utils/humming_utils.py
+@@ -486,7 +486,12 @@
+     else:
+         input_size_per_partition = layer.input_size
+     shape_k_stacks = [input_size_per_partition]
+-    shape_n_stacks = layer.output_partition_sizes
++    # Local patch (vLLM 0.29.0): ParallelLMHead has no output_partition_sizes either;
++    # its single output shard is num_embeddings_per_partition.
++    if hasattr(layer, "output_partition_sizes"):
++        shape_n_stacks = layer.output_partition_sizes
++    else:
++        shape_n_stacks = [layer.num_embeddings_per_partition]
+ 
+     # Step 1: convert weight and input schemas to humming standard format
+     weight_schema, tensors = weight_schema.convert_humming(
+@@ -506,13 +511,13 @@
+ 
+     # Step 2: transform weight (humming standard format) for forwarding.
+     config = prepare_layer_config(
+-        shape_n=sum(layer.output_partition_sizes),
++        shape_n=sum(shape_n_stacks),  # local patch: same value, works for ParallelLMHead
+         shape_k=input_size_per_partition,
+         weight_schema=weight_schema,
+         input_schema=input_schema,
+         pad_n_to_multiple=256,
+         pad_k_to_multiple=128,
+-        has_bias=layer.has_bias,
++        has_bias=getattr(layer, "has_bias", getattr(layer, "bias", None) is not None),  # local patch
+         torch_dtype=layer.params_dtype,
+     )
+     tensors = transform_humming_tensors(config, tensors)

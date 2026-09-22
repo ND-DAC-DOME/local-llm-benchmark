@@ -1,0 +1,93 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+<style>
+.list { display: grid; gap: 6px; margin-top: 12px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+.row:hover { border-color: var(--line-strong); }
+.row .q { font-size: 13.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .meta { font-size: 12px; color: var(--ink-3); }
+.row .v { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.dot.correct { background: var(--ok); } .dot.wrong { background: var(--bad); } .dot.truncated { background: var(--cut); }
+.detail { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 18px; margin-top: 16px; }
+.detail .qtext { white-space: pre-wrap; font-size: 14px; max-width: none; }
+.answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+.ans { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.ans .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ans pre { max-height: 320px; overflow: auto; margin: 6px 0 0; }
+.ans .stats { font-size: 12px; color: var(--ink-3); }
+.count { color: var(--ink-2); font-size: 13.5px; }
+</style>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">Question explorer</div>
+<h1>See the questions behind the numbers</h1>
+<p class="lede">Pick a task, then filter by what happened. Each row is one question with a verdict per model; open it to read the question, each model's final answer side by side, and (on demand) the full reasoning trace. This is the material to decide what a benchmark for your use should look like.</p>
+
+<div class="controls">
+  <label for="xtask">Task</label><select id="xtask"></select>
+  <label for="xcat">Category</label><select id="xcat"><option value="">all</option></select>
+  <input type="search" id="xq" placeholder="search in question text" size="28">
+</div>
+<div class="quick" id="quick"></div>
+<div class="legend" id="xlg"></div><p class="small" style="margin:6px 0 0">Quick filters compare the models at the same budget (12k where both exist, otherwise 32k); the 32k columns are shown for reference. Squares follow the legend order.</p>
+<div class="count" id="xcount"></div>
+<div class="list" id="list"></div>
+<div id="detail"></div>
+</main></div>
+<script>
+(async () => {
+  const IDX = await loadJSON('data/index.json'); const c = COLORS();
+  const state = { task: 'mmlu_pro', filter: 'all', cat: '', q: '', data: null, open: null };
+  const sel = document.getElementById('xtask');
+  const TN = { gsm8k: 'GSM8K', mmlu_pro: 'MMLU-Pro', humaneval: 'HumanEval', gpqa_diamond: 'GPQA Diamond', livecodebench: 'LiveCodeBench v6' };
+  for (const t of ['mmlu_pro', 'gpqa_diamond', 'livecodebench', 'humaneval', 'gsm8k']) sel.add(new Option(TN[t] + ' (' + IDX[t].n + ')', t));
+  sel.value = state.task;
+  const name = (k) => MODEL_NAME[modelOf(k)] + ' · ' + budgetOf(k);
+  const vOf = (it, k) => it.models[k] ? it.models[k].verdict : null;
+  const FILTERS = (cols) => { const m = cols.filter(k => budgetOf(k) === (cols.includes('muse@32k') ? '32k' : '12k'));
+    const muse = m.find(k => modelOf(k) === 'muse'), q38 = m.find(k => modelOf(k) === 'qwen38'), q36 = m.find(k => modelOf(k) === 'qwen36');
+    const f = [['all', 'All questions', () => true],
+      ['onlymuse', 'Only Muse correct (both Qwens not)', it => vOf(it, muse) === 'correct' && [q36, q38].filter(Boolean).every(k => vOf(it, k) !== 'correct')],
+      ['onlyqwen', 'A Qwen correct, Muse not', it => vOf(it, muse) !== 'correct' && [q36, q38].filter(Boolean).some(k => vOf(it, k) === 'correct')],
+      ['allwrong', 'Everyone wrong', it => m.every(k => vOf(it, k) && vOf(it, k) !== 'correct')],
+      ['allright', 'Everyone correct', it => m.every(k => vOf(it, k) === 'correct')]];
+    if (q38) f.push(['q38cut', 'Qwen3.8 did not finish', it => vOf(it, q38) === 'truncated']);
+    if (q36) f.push(['q36cut', 'Qwen3.6 did not finish', it => vOf(it, q36) === 'truncated']);
+    f.push(['musecut', 'Muse did not finish', it => vOf(it, muse) === 'truncated']);
+    return f; };
+  async function loadTask() { state.data = await loadJSON('data/items/' + state.task + '.json'); state.open = null;
+    const cat = document.getElementById('xcat'); cat.innerHTML = '<option value="">all categories</option>' + IDX[state.task].categories.map(x => `<option>${x}</option>`).join(''); state.cat = '';
+    legend(document.getElementById('xlg'), state.data.columns.map(k => [name(k), c[modelOf(k)]]).concat([['correct', c.ok], ['wrong', c.bad], ['not finished', c.cut]]));
+    const fs = FILTERS(state.data.columns); if (!fs.find(f => f[0] === state.filter)) state.filter = 'all';
+    document.getElementById('quick').innerHTML = fs.map(f => `<button class="btn ${f[0] === state.filter ? 'active' : ''}" data-f="${f[0]}">${f[1]} <span class="num">${state.data.items.filter(f[2]).length}</span></button>`).join('');
+    document.querySelectorAll('#quick button').forEach(b => b.onclick = () => { state.filter = b.dataset.f; loadTask(); });
+    render(); }
+  function render() { const fs = FILTERS(state.data.columns); const f = fs.find(x => x[0] === state.filter)[2];
+    const items = state.data.items.filter(it => f(it) && (!state.cat || it.category === state.cat) && (!state.q || it.question.toLowerCase().includes(state.q.toLowerCase())));
+    document.getElementById('xcount').textContent = items.length + ' of ' + state.data.items.length + ' questions';
+    document.getElementById('list').innerHTML = items.slice(0, 300).map(it => `<div class="row" data-id="${it.id}"><div><div class="q">${esc(it.question).slice(0, 160)}</div><div class="meta">${it.category || ''} · id ${it.id}</div></div>
+      <div class="v">${state.data.columns.map(k => it.models[k] ? `<span class="dot ${it.models[k].verdict}" title="${name(k)}: ${it.models[k].verdict}"></span>` : '').join('')}</div></div>`).join('') + (items.length > 300 ? '<div class="small">Showing the first 300; narrow the filter to see the rest.</div>' : '');
+    document.querySelectorAll('.row').forEach(r => r.onclick = () => openItem(r.dataset.id));
+    document.getElementById('detail').innerHTML = ''; }
+  const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  async function openItem(id) { const it = state.data.items.find(x => x.id === id); state.open = id;
+    const gold = it.gold ? `<div class="small" style="margin-top:8px"><strong>Reference answer:</strong> <span class="num">${esc(it.gold)}</span></div>` : (state.task === 'humaneval' ? '<div class="small" style="margin-top:8px">Graded by running the problem\'s unit tests.</div>' : state.task === 'livecodebench' ? '<div class="small" style="margin-top:8px">Graded by running all public and private tests (private tests are not shown).</div>' : '');
+    const el = document.getElementById('detail');
+    el.innerHTML = `<div class="detail"><div class="eyebrow">${TN[state.task]} · ${esc(it.category || '')} · id ${esc(id)}</div><div class="qtext">${esc(it.question)}</div>${gold}
+      <div class="answers">${state.data.columns.filter(k => it.models[k]).map(k => { const m = it.models[k]; return `<div class="ans"><div class="head"><span class="model ${modelOf(k)}">${name(k)}</span><span class="pill ${m.verdict}">${m.verdict === 'truncated' ? 'not finished' : m.verdict}</span></div>
+        <div class="stats num">${m.tokens.toLocaleString()} tokens · ${m.seconds}s</div><pre>${esc(m.answer) || '<em>(no final answer: hit the token limit)</em>'}</pre>
+        <details><summary>Reasoning trace</summary><pre data-k="${k}">loading…</pre></details></div>`; }).join('')}</div></div>`;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.querySelectorAll('details').forEach(d => d.addEventListener('toggle', async () => { if (!d.open) return; const pre = d.querySelector('pre'); if (pre.dataset.loaded) return;
+      try { const r = await loadJSON('data/reasoning/' + state.task + '/' + id.replace(/[^A-Za-z0-9_.-]/g, '_') + '.json'); pre.textContent = r[pre.dataset.k] || '(the server returned no separate reasoning for this answer)'; }
+      catch (e) { pre.textContent = '(reasoning not available)'; } pre.dataset.loaded = '1'; }, { once: true })); }
+  sel.onchange = () => { state.task = sel.value; loadTask(); };
+  document.getElementById('xcat').onchange = (e) => { state.cat = e.target.value; render(); };
+  document.getElementById('xq').oninput = (e) => { state.q = e.target.value; render(); };
+  loadTask();
+})();
+</script></body></html>

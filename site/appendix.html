@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">All numbers</div>
+<h1>Every run, every task</h1>
+<p class="lede">Reference material, not a story: the full table across all configurations, for checking a number without opening the JSON. Accuracy with (correct/items), not-finished count, mean tokens per answer. Runs are named as in <code>results/</code>.</p>
+<div class="tablewrap"><table id="all"></table></div>
+<p class="note">LiveCodeBench shows the judge-environment score with the strict score in parentheses. Speed numbers are on the <a href="speed.html">Speed</a> page. Generated from <code>results/*/summary.json</code> by <code>site/build.py</code>.</p>
+</main></div>
+<script>
+(async () => {
+  const S = await loadJSON('data/summary.json'); const tasks = Object.keys(S.tasks); const cols = Object.keys(S.runs);
+  const label = k => MODEL_NAME[modelOf(k)] + ' · ' + budgetOf(k);
+  let h = '<thead><tr><th>Task</th>' + cols.map(k => '<th class="n">' + label(k) + '<br><span style="font-weight:400;text-transform:none;letter-spacing:0">' + S.runs[k] + '</span></th>').join('') + '</tr></thead><tbody>';
+  for (const t of tasks) { h += '<tr><td>' + S.tasks[t] + '</td>' + cols.map(k => { const q = S.quality[t][k]; if (!q) return '<td class="n">—</td>';
+      const strict = q.accuracy_strict != null ? ' (' + q.accuracy_strict + '%)' : ''; return '<td class="n">' + q.accuracy + '%' + strict + '<br><span class="small">' + q.correct + '/' + q.n + ' · ' + q.truncated + ' not finished · ' + q.mean_tokens.toLocaleString() + ' tok</span></td>'; }).join('') + '</tr>'; }
+  document.getElementById('all').innerHTML = h + '</tbody>';
+})();
+</script></body></html>

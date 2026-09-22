@@ -1,0 +1,98 @@
+{
+  "config": {
+    "base_url": "http://localhost:8003/v1",
+    "model": "qwen3.8-27b",
+    "run_name": "qwen3.8-27b-nvfp4-a6000-mtp-32k",
+    "api_key": "none",
+    "tasks": "speed",
+    "limit": 200,
+    "system": "",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 8192,
+    "concurrency": 1,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-21 20:27:59",
+  "tasks": {
+    "mmlu_pro": {
+      "n": 200,
+      "scored": 200,
+      "correct": 160,
+      "accuracy": 0.8,
+      "errors": 0,
+      "truncated": 7,
+      "mean_completion_tokens": 4935,
+      "mean_seconds": 97.8
+    },
+    "gsm8k": {
+      "n": 200,
+      "scored": 200,
+      "correct": 197,
+      "accuracy": 0.985,
+      "errors": 0,
+      "truncated": 0,
+      "mean_completion_tokens": 438,
+      "mean_seconds": 8.2
+    },
+    "humaneval": {
+      "n": 164,
+      "scored": 164,
+      "correct": 160,
+      "accuracy": 0.9756,
+      "errors": 0,
+      "truncated": 1,
+      "mean_completion_tokens": 1879,
+      "mean_seconds": 36.3
+    },
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.196,
+        "median_decode_tok_s_per_stream": 52.73,
+        "aggregate_tok_s": 50.37
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1100,
+          "median_ttft_s": 0.643,
+          "median_prefill_tok_s": 1709.8
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4243,
+          "median_ttft_s": 2.342,
+          "median_prefill_tok_s": 1810.8
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 12472,
+          "median_ttft_s": 7.028,
+          "median_prefill_tok_s": 1774.7
+        }
+      }
+    },
+    "gpqa_diamond": {
+      "n": 198,
+      "scored": 198,
+      "correct": 158,
+      "accuracy": 0.798,
+      "errors": 0,
+      "truncated": 31,
+      "mean_completion_tokens": 11811,
+      "mean_seconds": 235.6
+    },
+    "livecodebench": {
+      "n": 175,
+      "scored": 175,
+      "correct": 105,
+      "accuracy": 0.6,
+      "errors": 0,
+      "truncated": 66,
+      "mean_completion_tokens": 17948,
+      "mean_seconds": 380.8,
+      "correct_judge_env": 105,
+      "accuracy_judge_env": 0.6,
+      "rescored": "fixed scorer (no injected imports for stdin programs); judge env = .venv-judge"
+    }
+  }
+}

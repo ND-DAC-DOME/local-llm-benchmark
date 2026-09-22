@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">Caveats</div>
+<h1>What these numbers can and cannot tell you</h1>
+<h2>Read differences against the noise</h2>
+<p>Samples of 200 questions carry a margin of error of ±5–6 points on MMLU-Pro and GPQA, ±2–4 on HumanEval. Measured directly: the same model run three times spread by ±1.5 points. A difference of 2 points between models means nothing; 9 points with a paired count of 22 vs 4 does.</p>
+<h2>Our prompts, our parsers</h2>
+<p>Scores compare these models with each other under identical conditions. They are not comparable to public leaderboards, which use other prompt formats, few-shot examples and larger budgets. Where vendor numbers exist for the same task at full precision, ours land close (GPQA Diamond: Muse 80.3 here vs 83.5 published) once the budget is accounted for.</p>
+<h2>4-bit weights, dynamic quantization</h2>
+<p>Everything ran quantized to fit 48 GB. The formats are not bit-for-bit comparable across models (unsloth's Q4 is dynamic per layer; NVIDIA's NVFP4 for Muse is a searched mix; the Qwen3.8 checkpoint is NVFP4 only in its MLPs, FP8 elsewhere). The check that matters was made: Muse scores the same in both formats, and the Muse–Qwen3.8 gap is the same with both in NVFP4.</p>
+<h2>Not measured</h2>
+<ul>
+<li><strong>Agentic work</strong> (SWE-bench-style: read a repository, run tools, iterate). LiveCodeBench is single-shot competitive programming, a different skill. Vendor-published SWE-bench numbers are in <code>swe-bench-cards.md</code>; the two models are within a few points there, by the vendors' own measurement.</li>
+<li><strong>Budgets above 32k</strong>. Qwen3.8 finishes 96% of what it finishes correctly; a larger cap would raise its LiveCodeBench score at a proportional cost in time. The right cap depends on the tolerated answer latency, which is the open question.</li>
+<li><strong>Muse on the Spark.</strong> It is not installed there and the team chose not to install it. Everything measured on the A6000 transfers for quality (same checkpoint gives the same scores on both machines), not for speed.</li>
+<li><strong>Multi-user throughput.</strong> Speed numbers are for one request at a time; the harness can measure concurrency but this was not asked.</li>
+</ul>
+<h2>Muse's own numbers vs the vendor's table</h2>
+<p>Meta's model card compares Muse with Qwen3.6-27B on its own agentic benchmarks, where it reports Muse ahead on most. None of those were run here; this study used independent public datasets on purpose. Both sets of numbers are self-consistent; they measure different things.</p>
+</main></div></body></html>

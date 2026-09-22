@@ -1,0 +1,54 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">How it was measured</div>
+<h1>The test bed</h1>
+<p class="lede">One harness (<code>bench.py</code>) talks to each model through its server's OpenAI-compatible API, sends the same prompts, grades the answers automatically, and saves every prompt, reasoning trace, answer, verdict, token count and latency. Everything here is reproducible from the repository; the scripts that ran are in <code>runs/</code>.</p>
+
+<h2>Models and how they were served</h2>
+<div class="tablewrap"><table><thead><tr><th>Model</th><th>Weights</th><th>Server</th><th>Speculative decoding</th><th>Reasoning setting</th></tr></thead><tbody>
+<tr><td class="model muse">Muse-Glimmer-30B</td><td>unsloth Q4 GGUF (4-bit dynamic); also NVIDIA NVFP4 for the quantization check</td><td>llama.cpp (vLLM for NVFP4)</td><td>DFlash drafter (Meta's), llama.cpp only</td><td>system prompt "Reasoning strength: high", top_k 64</td></tr>
+<tr><td class="model qwen36">Qwen3.6-27B</td><td>unsloth Q4 GGUF</td><td>llama.cpp</td><td>none (the GGUF has no MTP head)</td><td>default thinking mode, top_k 20</td></tr>
+<tr><td class="model qwen38">Qwen3.8-27B</td><td>unsloth NVFP4, the exact checkpoint the Spark serves</td><td>vLLM 0.29 (the Spark: 0.26.1)</td><td>MTP head, 3 tokens (the Spark's recipe); also run without</td><td>default thinking mode, top_k 20</td></tr>
+</tbody></table></div>
+<p class="note">Sampling for everyone: temperature 1.0, top_p 0.95, both vendors' recommendation; seed 1234. Reasoning is returned separately by the servers and is never graded, only counted. Hardware: two RTX A6000 (48 GB), one model per GPU; plus the team's DGX Spark over the network for one run.</p>
+
+<h2>Tasks</h2>
+<div class="tablewrap"><table><thead><tr><th>Task</th><th>What it tests</th><th>Items</th><th>Grading</th></tr></thead><tbody>
+<tr><td>GSM8K</td><td>grade-school math word problems</td><td>200 (fixed sample of the 1,319-item test set)</td><td>last "Final answer: N" equals the reference</td></tr>
+<tr><td>MMLU-Pro</td><td>10-option multiple choice, 14 subjects</td><td>200 (fixed sample of ~12k)</td><td>last "Answer: X" equals the reference letter</td></tr>
+<tr><td>HumanEval</td><td>164 Python functions</td><td>all 164</td><td>the problem's unit tests are executed; all must pass</td></tr>
+<tr><td>GPQA Diamond</td><td>graduate-level physics, chemistry, biology, 4 options</td><td>all 198</td><td>last "Answer: X" or \boxed{X}</td></tr>
+<tr><td>LiveCodeBench v6</td><td>competitive programming, contests Jan–Apr 2025 (after the models' training data)</td><td>all 175</td><td>the program is run on every public and private test (~40 per problem); all must pass</td></tr>
+</tbody></table></div>
+<p class="note">Zero-shot, one chat turn per item, our own prompt wording. Dataset revisions are pinned in <code>bench.py</code>; links and licenses in <code>benchmarks.md</code>.</p>
+
+<h2>The token budget</h2>
+<p>These are reasoning models: they generate thinking tokens before the answer, as many as they want. Every evaluation caps that, and so do the vendors (Qwen reports LiveCodeBench with up to 80k tokens). We used <strong>12,288</strong> tokens per answer for the first round and <strong>32,768</strong> for the second. An answer that hits the cap without a final answer counts as wrong, and is reported separately as "not finished". The cap turned out to be the variable that decides the ranking, so both budgets are shown wherever they exist.</p>
+
+<h2>Speed</h2>
+<ul>
+<li><strong>Decode:</strong> one short prompt, 512 tokens, streaming, 3 sequential requests; tokens ÷ (time from first to last token); median.</li>
+<li><strong>Prefill:</strong> prompts of ~1k, ~4k and ~12k tokens with max_tokens=1; prompt tokens ÷ time to first token; 3 repetitions, each with a unique prefix so a prefix cache cannot serve a repeat; median.</li>
+<li><strong>Prefix cache:</strong> the same prompt sent twice; the second request's time and the server's hit counter tell whether the cache served it. Five usage patterns; the server checked idle before each call.</li>
+<li>Token counts always come from the server's usage field, never estimated.</li>
+</ul>
+
+<h2>Corrections made along the way</h2>
+<ul>
+<li><strong>HumanEval scorer:</strong> the first pass did not keep the problem's helper functions in scope; 4 Muse solutions failed with NameError. Fixed, and every saved answer re-graded. All later runs used the fixed scorer.</li>
+<li><strong>LiveCodeBench scorer:</strong> an injected <code>from math import *</code> shadowed the built-in <code>pow(a, b, mod)</code>; programs now run exactly as written. And the judge environment: 23 Muse solutions used numba, which the real AtCoder judge provides; scores are reported both with the standard library only (strict) and with numpy/scipy/numba available (judge env, the headline). Saved answers were re-graded under both, nothing regenerated.</li>
+<li><strong>Every wrong answer</strong> of every run was classified (wrong / not finished / parser miss / harness error). Parser misses: zero in all runs.</li>
+</ul>
+
+<h2>What is and is not reproducible</h2>
+<ul>
+<li>Pinned: container images (by digest), Python packages, dataset revisions, model snapshots with file hashes, item samples (seed).</li>
+<li>Not deterministic: sampling at temperature 1.0 and GPU kernels. The same Qwen3.8 checkpoint scored 74.5 / 77.0 / 76.0 on MMLU-Pro in three runs; read every difference against that ±1.5.</li>
+<li>Repository: <code>README.md</code> (reproduction), <code>results.md</code> (full report), <code>MODELS.md</code>, <code>docs/spark-measurements.md</code> (the command behind every Spark number).</li>
+</ul>
+</main></div></body></html>

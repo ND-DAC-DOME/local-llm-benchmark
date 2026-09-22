@@ -1,0 +1,68 @@
+{
+  "config": {
+    "base_url": "http://localhost:8007/v1",
+    "model": "muse-glimmer-30b-q4",
+    "run_name": "muse-glimmer-30b-q4-dflash-32k",
+    "api_key": "none",
+    "tasks": "speed",
+    "limit": 200,
+    "system": "Reasoning strength: high",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 8192,
+    "concurrency": 1,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-21 19:54:58",
+  "tasks": {
+    "gpqa_diamond": {
+      "n": 198,
+      "scored": 198,
+      "correct": 159,
+      "accuracy": 0.803,
+      "errors": 0,
+      "truncated": 1,
+      "mean_completion_tokens": 5180,
+      "mean_seconds": 130.3
+    },
+    "livecodebench": {
+      "n": 175,
+      "scored": 175,
+      "correct": 117,
+      "accuracy": 0.6686,
+      "errors": 0,
+      "truncated": 19,
+      "mean_completion_tokens": 10574,
+      "mean_seconds": 264.6,
+      "correct_judge_env": 138,
+      "accuracy_judge_env": 0.7886,
+      "rescored": "fixed scorer (no injected imports for stdin programs); judge env = .venv-judge"
+    },
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.156,
+        "median_decode_tok_s_per_stream": 56.12,
+        "aggregate_tok_s": 54.41
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1038,
+          "median_ttft_s": 0.966,
+          "median_prefill_tok_s": 1062.2
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4051,
+          "median_ttft_s": 3.544,
+          "median_prefill_tok_s": 1138.5
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 11973,
+          "median_ttft_s": 10.251,
+          "median_prefill_tok_s": 1171.2
+        }
+      }
+    }
+  }
+}

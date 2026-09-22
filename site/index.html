@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">Summary</div>
+<h1>Same quality if you can afford the wait; Muse if you can't</h1>
+<p class="lede">Muse-Glimmer-30B, Qwen3.6-27B and Qwen3.8-27B, run locally on the same questions, prompts, sampling and token budgets. Every answer was saved and every wrong answer inspected. The three findings below carry the decision; each links to the page that holds the evidence.</p>
+
+<h2>1. Given room to finish thinking, the three models are equivalent</h2>
+<p class="claim">MMLU-Pro with a 32k-token budget: 82 / 82 / 80%.</p>
+<figure><div class="chart"><canvas id="c1"></canvas></div>
+<figcaption>200 MMLU-Pro questions, 32,768-token completion budget. Muse ran at 12k (it hit the limit on only 3 questions). Margin of error ±5–6 points; differences this size are noise. <a href="quality.html">Quality page</a> has every task.</figcaption></figure>
+
+<h2>2. Muse gets there with less than half the tokens</h2>
+<p class="claim">Tokens per answer on the same questions: 1,592 vs 4,083 vs 4,935.</p>
+<figure><div class="chart"><canvas id="c2"></canvas></div>
+<figcaption>Mean completion tokens (reasoning + answer) on the run above. Time per question follows the same ratio: 50 s, 176 s, 98 s with 3 requests in flight.</figcaption></figure>
+
+<h2>3. With a tight budget, Muse wins because it finishes</h2>
+<p class="claim">MMLU-Pro at 12k tokens: Muse 82%, Qwen3.6 73%, Qwen3.8 77%. The gap is answers that were never finished.</p>
+<figure><div class="legend" id="lg3"></div><div class="chart tall"><canvas id="c3"></canvas></div>
+<figcaption>Each bar is 200 questions. "Not finished" = the model was still reasoning when it hit the 12,288-token limit; it counts as wrong. Among the questions each model did finish, accuracy is 83% / 81% / 86%.</figcaption></figure>
+
+<h2>What decides it</h2>
+<div class="callout"><p style="margin:0 0 8px"><strong>The token budget is the whole story</strong>, and it is a product decision, not a benchmark one. A 32k-token answer takes about 11 minutes on the A6000 with speculative decoding and over 25 minutes on the Spark. The question still open on the team's side: <em>how long may an answer take in the intended use?</em> That fixes the budget, and the budget fixes which model is ahead.</p>
+<p class="small" style="margin:0">This held at every scale we tested: MMLU-Pro and HumanEval at 12k vs 32k, GPQA Diamond (a tie at 80%), and LiveCodeBench, where Qwen3.8 does not finish 38% of the problems even at 32k (79% vs 60%). See <a href="quality.html">Quality</a>.</p></div>
+
+<h2>Also checked, so the comparison holds</h2>
+<ul>
+<li><strong>Quantization does not change the result.</strong> Muse in NVFP4 and in Q4 GGUF score the same (82.0 vs 81.0 on MMLU-Pro); Muse vs Qwen3.8 both in NVFP4 on the same runtime shows the same gap.</li>
+<li><strong>Same checkpoint, same scores on the Spark and on the A6000.</strong> Three Qwen3.8 runs land within ±1.5 points, which is also the noise level to read every table with.</li>
+<li><strong>Speculative decoding (MTP, DFlash) changes speed, not answers.</strong> Qwen3.8 31.8 → 50.8 tok/s; Muse 38.5 → 56.5 tok/s. See <a href="speed.html">Speed</a>.</li>
+<li><strong>The A6000 decodes 2.5× faster than the Spark</strong> on the same model and recipe; prefill is about equal. The Spark's config is well tuned; it is memory-bandwidth bound.</li>
+</ul>
+<p class="small">Not measured: agentic / SWE-bench-style work. Vendor-published SWE-bench numbers are in the repository (<code>swe-bench-cards.md</code>). See <a href="caveats.html">Caveats</a>.</p>
+</main></div>
+<script>
+(async () => {
+  const S = await loadJSON('data/summary.json'); const c = COLORS(); const q = S.quality.mmlu_pro;
+  const keys = ['muse@12k', 'qwen36@32k', 'qwen38@32k'];
+  const labels = ['Muse-Glimmer (12k)', 'Qwen3.6 (32k)', 'Qwen3.8 (32k)'];
+  const cols = keys.map(k => c[modelOf(k)]);
+  new Chart(document.getElementById('c1'), { type: 'bar', data: { labels, datasets: [{ ...bar(cols), data: keys.map(k => q[k].accuracy) }] },
+    options: baseChartOptions({ plugins: { legend: { display: false }, valueLabels: { enabled: true, format: v => v + '%' }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y}% (${q[keys[ctx.dataIndex]].correct}/200)` } } },
+      scales: { x: { grid: { display: false } }, y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } } }) });
+  new Chart(document.getElementById('c2'), { type: 'bar', data: { labels, datasets: [{ ...bar(cols), data: keys.map(k => q[k].mean_tokens) }] },
+    options: baseChartOptions({ plugins: { valueLabels: { enabled: true, format: v => v.toLocaleString() }, legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { min: 0, max: 6000, ticks: { callback: v => v.toLocaleString() } } } }) });
+  const k12 = ['muse@12k', 'qwen36@12k', 'qwen38@12k'];
+  legend(document.getElementById('lg3'), [['Correct', c.ok], ['Wrong', c.bad], ['Not finished (hit the limit)', c.cut]]);
+  new Chart(document.getElementById('c3'), { type: 'bar', data: { labels: ['Muse-Glimmer', 'Qwen3.6', 'Qwen3.8'], datasets: [
+      { label: 'Correct', ...bar(c.ok), data: k12.map(k => q[k].correct), borderRadius: 0 },
+      { label: 'Wrong', ...bar(c.bad), data: k12.map(k => q[k].wrong), borderRadius: 0, noLabel: true },
+      { label: 'Not finished', ...bar(c.cut), data: k12.map(k => q[k].truncated), noLabel: true } ] },
+    options: baseChartOptions({ plugins: { legend: { display: false }, valueLabels: { enabled: false }, tooltip: { mode: 'index', callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}` } } },
+      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, min: 0, max: 200, ticks: { stepSize: 50 } } } }) });
+})();
+</script></body></html>

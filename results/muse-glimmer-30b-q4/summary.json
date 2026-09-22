@@ -1,0 +1,76 @@
+{
+  "config": {
+    "base_url": "http://localhost:8001/v1",
+    "model": "muse-glimmer-30b-q4",
+    "run_name": "muse-glimmer-30b-q4",
+    "api_key": "none",
+    "tasks": "speed",
+    "limit": 200,
+    "system": "Reasoning strength: high",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 8192,
+    "concurrency": 1,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-18 11:20:56",
+  "tasks": {
+    "gsm8k": {
+      "n": 200,
+      "scored": 200,
+      "correct": 194,
+      "accuracy": 0.97,
+      "errors": 0,
+      "truncated": 0,
+      "mean_completion_tokens": 570,
+      "mean_seconds": 17.9
+    },
+    "mmlu_pro": {
+      "n": 200,
+      "scored": 200,
+      "correct": 164,
+      "accuracy": 0.82,
+      "errors": 0,
+      "truncated": 3,
+      "mean_completion_tokens": 1592,
+      "mean_seconds": 50.2
+    },
+    "humaneval": {
+      "n": 164,
+      "scored": 164,
+      "correct": 162,
+      "accuracy": 0.9878,
+      "errors": 0,
+      "truncated": 1,
+      "mean_completion_tokens": 1181,
+      "mean_seconds": 37.5,
+      "rescored": "prompt helpers kept in scope"
+    },
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.191,
+        "median_decode_tok_s_per_stream": 38.45,
+        "aggregate_tok_s": 36.95
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1038,
+          "median_ttft_s": 1.245,
+          "median_prefill_tok_s": 855.0
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4051,
+          "median_ttft_s": 3.138,
+          "median_prefill_tok_s": 1287.7
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 11973,
+          "median_ttft_s": 8.476,
+          "median_prefill_tok_s": 1425.3
+        }
+      }
+    }
+  }
+}

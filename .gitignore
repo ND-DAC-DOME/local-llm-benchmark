@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+config.local.env
+results/*.log
+!results/run_09_prefix_cache.log
+results/*.sh
+results/*/summary.before_speed.json
+.venv-judge/

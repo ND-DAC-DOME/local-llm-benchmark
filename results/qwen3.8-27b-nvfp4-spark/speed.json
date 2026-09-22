@@ -1,0 +1,96 @@
+{
+  "concurrency_1": {
+    "requests": 3,
+    "median_ttft_s": 0.251,
+    "median_decode_tok_s_per_stream": 20.28,
+    "aggregate_tok_s": 20.09,
+    "rows": [
+      {
+        "ttft_s": 0.244,
+        "completion_tokens": 512,
+        "decode_tok_s": 20.28,
+        "total_s": 25.49
+      },
+      {
+        "ttft_s": 0.251,
+        "completion_tokens": 512,
+        "decode_tok_s": 20.37,
+        "total_s": 25.39
+      },
+      {
+        "ttft_s": 0.279,
+        "completion_tokens": 512,
+        "decode_tok_s": 20.24,
+        "total_s": 25.57
+      }
+    ]
+  },
+  "prefill": {
+    "~1024_tokens": {
+      "median_prompt_tokens": 1100,
+      "median_ttft_s": 0.501,
+      "median_prefill_tok_s": 2188.6,
+      "rows": [
+        {
+          "prompt_tokens": 1094,
+          "ttft_s": 0.5,
+          "prefill_tok_s": 2188.6
+        },
+        {
+          "prompt_tokens": 1152,
+          "ttft_s": 0.532,
+          "prefill_tok_s": 2163.9
+        },
+        {
+          "prompt_tokens": 1100,
+          "ttft_s": 0.501,
+          "prefill_tok_s": 2195.4
+        }
+      ]
+    },
+    "~4096_tokens": {
+      "median_prompt_tokens": 4243,
+      "median_ttft_s": 2.299,
+      "median_prefill_tok_s": 1845.6,
+      "rows": [
+        {
+          "prompt_tokens": 4243,
+          "ttft_s": 2.299,
+          "prefill_tok_s": 1845.6
+        },
+        {
+          "prompt_tokens": 4253,
+          "ttft_s": 2.33,
+          "prefill_tok_s": 1825.7
+        },
+        {
+          "prompt_tokens": 4241,
+          "ttft_s": 2.288,
+          "prefill_tok_s": 1853.7
+        }
+      ]
+    },
+    "~12288_tokens": {
+      "median_prompt_tokens": 12472,
+      "median_ttft_s": 9.185,
+      "median_prefill_tok_s": 1355.0,
+      "rows": [
+        {
+          "prompt_tokens": 12403,
+          "ttft_s": 9.153,
+          "prefill_tok_s": 1355.0
+        },
+        {
+          "prompt_tokens": 12620,
+          "ttft_s": 9.322,
+          "prefill_tok_s": 1353.7
+        },
+        {
+          "prompt_tokens": 12472,
+          "ttft_s": 9.185,
+          "prefill_tok_s": 1357.9
+        }
+      ]
+    }
+  }
+}

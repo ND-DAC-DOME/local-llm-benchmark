@@ -1,0 +1,75 @@
+{
+  "config": {
+    "base_url": "http://<spark-host>:18300/v1",
+    "model": "qwen3.8-27b",
+    "run_name": "qwen3.8-27b-nvfp4-spark",
+    "api_key": "none",
+    "tasks": "gsm8k,mmlu_pro,humaneval,speed",
+    "limit": 200,
+    "system": "",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 12288,
+    "concurrency": 3,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-18 17:20:45",
+  "tasks": {
+    "gsm8k": {
+      "n": 200,
+      "scored": 200,
+      "correct": 197,
+      "accuracy": 0.985,
+      "errors": 0,
+      "truncated": 0,
+      "mean_completion_tokens": 398,
+      "mean_seconds": 18.6
+    },
+    "mmlu_pro": {
+      "n": 200,
+      "scored": 200,
+      "correct": 152,
+      "accuracy": 0.76,
+      "errors": 0,
+      "truncated": 30,
+      "mean_completion_tokens": 3397,
+      "mean_seconds": 181.0
+    },
+    "humaneval": {
+      "n": 164,
+      "scored": 164,
+      "correct": 157,
+      "accuracy": 0.9573,
+      "errors": 0,
+      "truncated": 7,
+      "mean_completion_tokens": 1671,
+      "mean_seconds": 85.1
+    },
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.251,
+        "median_decode_tok_s_per_stream": 20.28,
+        "aggregate_tok_s": 20.09
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1100,
+          "median_ttft_s": 0.501,
+          "median_prefill_tok_s": 2188.6
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4243,
+          "median_ttft_s": 2.299,
+          "median_prefill_tok_s": 1845.6
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 12472,
+          "median_ttft_s": 9.185,
+          "median_prefill_tok_s": 1355.0
+        }
+      }
+    }
+  }
+}

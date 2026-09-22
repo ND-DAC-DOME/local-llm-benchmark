@@ -1,0 +1,76 @@
+<!doctype html><html lang="en"><head><title>Muse-Glimmer vs Qwen</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="site.js"></script>
+</head><body><div class="layout"><nav class="side"></nav><main>
+<div class="eyebrow">Quality</div>
+<h1>Where each model is right, wrong, or cut off</h1>
+<p class="lede">Every chart on this page has one message, stated above it. Bars are counts of questions, split into correct, wrong, and "not finished" (the model hit the token limit while still reasoning, which counts as wrong). Hover for the numbers; the <a href="explorer.html">explorer</a> shows the questions themselves.</p>
+
+<h2>Budget changes the ranking, not the models</h2>
+<p class="claim">At 12k tokens Muse leads MMLU-Pro; at 32k the Qwens catch up, by finishing more.</p>
+<div class="controls"><label for="budget">Budget</label><select id="budget"><option value="12k">12k tokens</option><option value="32k">32k tokens</option></select>
+<label for="task">Task</label><select id="task"><option value="mmlu_pro">MMLU-Pro (200)</option><option value="humaneval">HumanEval (164)</option><option value="gsm8k">GSM8K (200)</option></select></div>
+<figure><div class="legend" id="lgA"></div><div class="chart tall"><canvas id="cA"></canvas></div><figcaption id="capA"></figcaption></figure>
+
+<h2>The Qwens are not worse reasoners; they are slower to finish</h2>
+<p class="claim">GPQA Diamond: same score (80.3 vs 79.8%), opposite error profiles.</p>
+<figure><div class="legend" id="lgB"></div><div class="chart"><canvas id="cB"></canvas></div>
+<figcaption>198 graduate-level science questions, 32k budget. Muse finishes nearly everything and is wrong on 38; Qwen3.8 is right on 95% of what it finishes but does not finish 31. Per question: 14 only Muse, 13 only Qwen3.8, a tie. Qwen3.6 did not run this task (left out by decision after tying Qwen3.8 on the others).</figcaption></figure>
+
+<h2>On competitive programming the same mechanism separates them clearly</h2>
+<p class="claim">LiveCodeBench v6: Muse 79%, Qwen3.8 60%. Qwen3.8 does not finish 38% of the problems at 32k.</p>
+<figure><div class="legend" id="lgC"></div><div class="chart"><canvas id="cC"></canvas></div>
+<figcaption>175 problems from contests of Jan–Apr 2025, graded by running every test (judge environment with numpy/numba available, as AtCoder's). Per problem: 34 only Muse, 1 only Qwen3.8, 104 both. Of Qwen3.8's 66 unfinished problems, Muse solved 34. By difficulty: easy 43/43 for both; hard 49/80 vs 21/80.</figcaption></figure>
+<details><summary>Two scores for LiveCodeBench: judge environment vs strict</summary><p class="small">With only the standard library available (strict), Muse scores 66.9%: 23 of its solutions <code>import numba</code>, a JIT compiler the real AtCoder judge provides. With those libraries available, 21 of them pass (all hard problems). Qwen3.8 used no such libraries, so its score is 60.0% either way. Both are in the <a href="appendix.html">appendix</a>.</p></details>
+
+<h2>The same model gives the same scores on any machine</h2>
+<p class="claim">Qwen3.8 run three times (A6000 without MTP, A6000 with MTP, Spark): within ±1.5 points.</p>
+<figure><div class="legend" id="lgD"></div><div class="chart"><canvas id="cD"></canvas></div>
+<figcaption>Identical checkpoint (unsloth/Qwen3.8-27B-NVFP4) and recipe, 12k budget. This spread is the run-to-run noise (temperature 1.0), and the scale to read every other difference against. It also means everything measured on the A6000 applies to the Spark.</figcaption></figure>
+
+<h2>Quantization does not change the outcome</h2>
+<div class="tablewrap"><table><thead><tr><th>Muse-Glimmer, 12k budget</th><th class="n">Q4 GGUF (llama.cpp)</th><th class="n">NVFP4 (vLLM)</th></tr></thead><tbody id="tQ"></tbody></table></div>
+<p class="note">Per question on MMLU-Pro: 5 only Q4, 3 only NVFP4, 159 both. NVFP4 here is NVIDIA's AutoQuant checkpoint (mixed NVFP4/FP8/BF16); Q4 is unsloth's dynamic GGUF. Muse vs Qwen3.8 both in NVFP4 on the same vLLM shows the same MMLU-Pro gap as the GGUF runs (17 vs 4 per question).</p>
+
+<h2>GSM8K and HumanEval do not separate these models</h2>
+<div class="tablewrap"><table><thead><tr><th>12k budget</th><th class="n">Muse</th><th class="n">Qwen3.6</th><th class="n">Qwen3.8</th></tr></thead><tbody id="tE"></tbody></table></div>
+<p class="note">Everyone scores 96–99%. They stay in the study as sanity checks with known expected scores (they validated the harness and showed that quantization, speculative decoding and hardware do not change answers), but they cannot rank the models. That is why the harder tasks above were added.</p>
+</main></div>
+<script>
+(async () => {
+  const S = await loadJSON('data/summary.json'); const c = COLORS();
+  const stack = (el, lg, keys, labels, q, n) => { legend(lg, [['Correct', c.ok], ['Wrong', c.bad], ['Not finished', c.cut]]);
+    return new Chart(el, { type: 'bar', data: { labels, datasets: [
+      { label: 'Correct', ...bar(c.ok), borderRadius: 0, data: keys.map(k => q[k] ? q[k].correct : null) },
+      { label: 'Wrong', ...bar(c.bad), borderRadius: 0, noLabel: true, data: keys.map(k => q[k] ? q[k].wrong : null) },
+      { label: 'Not finished', ...bar(c.cut), noLabel: true, data: keys.map(k => q[k] ? q[k].truncated : null) } ] },
+      options: baseChartOptions({ plugins: { legend: { display: false }, valueLabels: { enabled: true, format: (v, ds, i) => q[keys[i]] ? q[keys[i]].accuracy + '%' : '' },
+        tooltip: { mode: 'index', callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}` } } },
+        scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, min: 0, max: n } } }) }); };
+  // A: budget/task switcher
+  let chA; const draw = () => { const b = document.getElementById('budget').value, t = document.getElementById('task').value; const q = S.quality[t];
+    const keys = b === '12k' ? ['muse@12k', 'qwen36@12k', 'qwen38@12k'] : ['muse@12k', 'qwen36@32k', 'qwen38@32k'];
+    const labels = b === '12k' ? ['Muse-Glimmer', 'Qwen3.6', 'Qwen3.8'] : ['Muse-Glimmer (12k ref.)', 'Qwen3.6 (32k)', 'Qwen3.8 (32k)'];
+    if (chA) chA.destroy(); chA = stack(document.getElementById('cA'), document.getElementById('lgA'), keys, labels, q, t === 'humaneval' ? 164 : 200);
+    document.getElementById('capA').textContent = b === '12k' ? 'Accuracy over all items, 12,288-token budget. Not finished: ' + keys.map((k, i) => labels[i] + ' ' + q[k].truncated).join(', ') + '.'
+      : 'Muse has no 32k run on this task (it barely truncated at 12k); its 12k bar is the reference. Not finished at 32k: ' + keys.slice(1).map((k, i) => labels[i + 1] + ' ' + q[k].truncated).join(', ') + '.'; };
+  document.getElementById('budget').onchange = draw; document.getElementById('task').onchange = draw; draw();
+  // B: GPQA
+  stack(document.getElementById('cB'), document.getElementById('lgB'), ['muse@32k', 'qwen38@32k'], ['Muse-Glimmer (32k)', 'Qwen3.8 (32k)'], S.quality.gpqa_diamond, 198);
+  // C: LCB
+  stack(document.getElementById('cC'), document.getElementById('lgC'), ['muse@32k', 'qwen38@32k'], ['Muse-Glimmer (32k)', 'Qwen3.8 (32k)'], S.quality.livecodebench, 175);
+  // D: three Qwen3.8 runs
+  const runs = Object.keys(S.qwen38_runs); const tasks = [['mmlu_pro', 'MMLU-Pro'], ['humaneval', 'HumanEval'], ['gsm8k', 'GSM8K']];
+  const shades = [c.qwen38, c.ink3, c.ink2];
+  legend(document.getElementById('lgD'), runs.map((r, i) => [r, shades[i]]));
+  new Chart(document.getElementById('cD'), { type: 'bar', data: { labels: tasks.map(t => t[1]), datasets: runs.map((r, i) => ({ label: r, ...bar(shades[i]), data: tasks.map(t => S.qwen38_runs[r][t[0]]) })) },
+    options: baseChartOptions({ plugins: { legend: { display: false }, valueLabels: { enabled: true, format: v => v + '%' } }, scales: { x: { grid: { display: false } }, y: { min: 60, max: 100, ticks: { callback: v => v + '%' } } } }) });
+  // tables
+  document.getElementById('tQ').innerHTML = tasks.map(t => `<tr><td>${t[1]}</td><td class="n">${S.muse_quant[t[0]]['Q4 GGUF']}%</td><td class="n">${S.muse_quant[t[0]]['NVFP4']}%</td></tr>`).join('');
+  const e = (t, k) => S.quality[t][k] ? S.quality[t][k].accuracy + '%' : '—';
+  document.getElementById('tE').innerHTML = [['gsm8k', 'GSM8K (200)'], ['humaneval', 'HumanEval (164)']].map(t => `<tr><td>${t[1]}</td><td class="n">${e(t[0], 'muse@12k')}</td><td class="n">${e(t[0], 'qwen36@12k')}</td><td class="n">${e(t[0], 'qwen38@12k')}</td></tr>`).join('');
+})();
+</script></body></html>

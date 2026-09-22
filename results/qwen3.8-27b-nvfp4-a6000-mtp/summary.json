@@ -1,0 +1,75 @@
+{
+  "config": {
+    "base_url": "http://localhost:8003/v1",
+    "model": "qwen3.8-27b",
+    "run_name": "qwen3.8-27b-nvfp4-a6000-mtp",
+    "api_key": "none",
+    "tasks": "gsm8k,mmlu_pro,humaneval",
+    "limit": 200,
+    "system": "",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 12288,
+    "concurrency": 3,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-18 20:47:18",
+  "tasks": {
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.202,
+        "median_decode_tok_s_per_stream": 50.8,
+        "aggregate_tok_s": 47.87
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1099,
+          "median_ttft_s": 0.645,
+          "median_prefill_tok_s": 1743.2
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4243,
+          "median_ttft_s": 2.314,
+          "median_prefill_tok_s": 1836.2
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 12472,
+          "median_ttft_s": 6.98,
+          "median_prefill_tok_s": 1788.7
+        }
+      }
+    },
+    "gsm8k": {
+      "n": 200,
+      "scored": 200,
+      "correct": 195,
+      "accuracy": 0.975,
+      "errors": 0,
+      "truncated": 1,
+      "mean_completion_tokens": 521,
+      "mean_seconds": 9.7
+    },
+    "mmlu_pro": {
+      "n": 200,
+      "scored": 200,
+      "correct": 154,
+      "accuracy": 0.77,
+      "errors": 0,
+      "truncated": 24,
+      "mean_completion_tokens": 3109,
+      "mean_seconds": 62.1
+    },
+    "humaneval": {
+      "n": 164,
+      "scored": 164,
+      "correct": 159,
+      "accuracy": 0.9695,
+      "errors": 0,
+      "truncated": 5,
+      "mean_completion_tokens": 1438,
+      "mean_seconds": 27.4
+    }
+  }
+}

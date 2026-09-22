@@ -1,0 +1,75 @@
+{
+  "config": {
+    "base_url": "http://localhost:8002/v1",
+    "model": "qwen3.8-27b",
+    "run_name": "qwen3.8-27b-nvfp4-a6000",
+    "api_key": "none",
+    "tasks": "speed",
+    "limit": 200,
+    "system": "",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 8192,
+    "concurrency": 1,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-09-18 15:42:45",
+  "tasks": {
+    "gsm8k": {
+      "n": 200,
+      "scored": 200,
+      "correct": 196,
+      "accuracy": 0.98,
+      "errors": 0,
+      "truncated": 0,
+      "mean_completion_tokens": 449,
+      "mean_seconds": 17.4
+    },
+    "mmlu_pro": {
+      "n": 200,
+      "scored": 200,
+      "correct": 149,
+      "accuracy": 0.745,
+      "errors": 0,
+      "truncated": 27,
+      "mean_completion_tokens": 3159,
+      "mean_seconds": 119.1
+    },
+    "humaneval": {
+      "n": 164,
+      "scored": 164,
+      "correct": 155,
+      "accuracy": 0.9451,
+      "errors": 0,
+      "truncated": 8,
+      "mean_completion_tokens": 1833,
+      "mean_seconds": 69.3
+    },
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.16,
+        "median_decode_tok_s_per_stream": 31.83,
+        "aggregate_tok_s": 30.28
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1100,
+          "median_ttft_s": 0.637,
+          "median_prefill_tok_s": 1763.9
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4243,
+          "median_ttft_s": 2.302,
+          "median_prefill_tok_s": 1845.2
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 12472,
+          "median_ttft_s": 6.958,
+          "median_prefill_tok_s": 1791.4
+        }
+      }
+    }
+  }
+}
