@@ -12,7 +12,7 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; [ -f "$ROOT/config.env" ] || ROOT="$(dirname "$ROOT")"
-set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; set +a
+set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; [ -f "$ROOT/.env" ] && . "$ROOT/.env"; set +a
 
 HF=$HF_CACHE
 BENCH_SPEED=".venv/bin/python bench.py --tasks speed --temperature 1.0 --top-p 0.95 --speed-concurrency 1"

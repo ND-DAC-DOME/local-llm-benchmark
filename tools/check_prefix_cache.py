@@ -11,27 +11,29 @@ Method: for each pair, send a NEW long prompt (cold), then the SAME prompt again
     and left out of the verdict. Global hit counters are printed only as a secondary, noisy signal.
 Standard library only. Load: 2 short requests per pair.
 """
-import argparse, json, random, re, statistics, time, urllib.request
+import argparse, os, json, random, re, statistics, time, urllib.request
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--url", default="http://localhost:18300")
 ap.add_argument("--model", default="qwen3.8-27b")
+ap.add_argument("--api-key", default=os.environ.get("SPARK_API_KEY", ""), help="bearer token; defaults to $SPARK_API_KEY")
 ap.add_argument("--pairs", type=int, default=5)
 ap.add_argument("--repeat", type=int, default=600, help="filler sentences; 600 ~ 6k tokens (must exceed the cache block size)")
 ap.add_argument("--long", action="store_true", help="one pair with a ~129k-token prompt (12900 sentences), as run on the Spark on 2026-09-21; occupies the server for ~6 min")
 a = ap.parse_args()
+HDR = {"Authorization": "Bearer " + a.api_key} if a.api_key else {}
 if a.long:
     a.repeat, a.pairs = 12900, 1
 
 def metric(name):
-    txt = urllib.request.urlopen(a.url + "/metrics", timeout=30).read().decode()
+    txt = urllib.request.urlopen(urllib.request.Request(a.url + "/metrics", headers=HDR), timeout=30).read().decode()
     m = re.search(r"^vllm:" + name + r"\{[^}]*\}\s+([\d.e+]+)", txt, re.M)
     return float(m.group(1)) if m else None
 
 def ask(prompt):
     body = json.dumps({"model": a.model, "max_tokens": 1, "temperature": 0,
                        "messages": [{"role": "user", "content": prompt}]}).encode()
-    req = urllib.request.Request(a.url + "/v1/chat/completions", body, {"Content-Type": "application/json"})
+    req = urllib.request.Request(a.url + "/v1/chat/completions", body, {"Content-Type": "application/json", **HDR})
     t0 = time.time()
     r = json.load(urllib.request.urlopen(req, timeout=600))
     u = r.get("usage") or {}

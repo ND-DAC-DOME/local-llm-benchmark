@@ -8,15 +8,17 @@ the second request is much faster and the hit counter grows by about the shared 
 is global (other users move it too); the latency of your own request is the reliable signal.
 Standard library only.
 """
-import argparse, json, random, re, time, urllib.request
+import argparse, os, json, random, re, time, urllib.request
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--url", default="http://localhost:18300")
 ap.add_argument("--model", default="qwen3.8-27b")
+ap.add_argument("--api-key", default=os.environ.get("SPARK_API_KEY", ""), help="bearer token; defaults to $SPARK_API_KEY")
 a = ap.parse_args()
+HDR = {"Authorization": "Bearer " + a.api_key} if a.api_key else {}
 
 def hits():
-    t = urllib.request.urlopen(a.url + "/metrics", timeout=30).read().decode()
+    t = urllib.request.urlopen(urllib.request.Request(a.url + "/metrics", headers=HDR), timeout=30).read().decode()
     m = re.search(r"^vllm:prefix_cache_hits_total\{[^}]*\}\s+([\d.e+]+)", t, re.M)
     return float(m.group(1)) if m else float("nan")
 
@@ -24,7 +26,7 @@ def ask(messages, max_tokens=1):
     b = json.dumps({"model": a.model, "max_tokens": max_tokens, "temperature": 0, "messages": messages}).encode()
     t0 = time.time()
     r = json.load(urllib.request.urlopen(urllib.request.Request(
-        a.url + "/v1/chat/completions", b, {"Content-Type": "application/json"}), timeout=900))
+        a.url + "/v1/chat/completions", b, {"Content-Type": "application/json", **HDR}), timeout=900))
     return time.time() - t0, r["usage"]["prompt_tokens"], r["choices"][0]["message"].get("content") or ""
 
 def filler(n, tag):

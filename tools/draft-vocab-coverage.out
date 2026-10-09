@@ -1,0 +1,162 @@
+draft set: 65,536 ids (min 0, max 248076); tokenizer vocab: 248,077
+
+run                                      task           records      tokens   outside  coverage  server tok
+muse-glimmer-30b-nvfp4-a6000             gsm8k              200     124,717     1,606   98.712%     110,640
+muse-glimmer-30b-nvfp4-a6000             humaneval          164     237,559     3,674   98.453%     220,910
+muse-glimmer-30b-nvfp4-a6000             mmlu_pro           200     358,235     7,074   98.025%     317,971
+muse-glimmer-30b-q4                      gsm8k              200     128,144     1,648   98.714%     114,004
+muse-glimmer-30b-q4                      humaneval          164     208,245     3,171   98.477%     193,695
+muse-glimmer-30b-q4                      mmlu_pro           200     359,797     7,444   97.931%     318,405
+muse-glimmer-30b-q4-dflash-32k           gpqa_diamond       198   1,121,154    32,771   97.077%   1,025,724
+muse-glimmer-30b-q4-dflash-32k           livecodebench      175   1,944,947    22,096   98.864%   1,850,455
+qwen3.6-27b-q4                           gsm8k              200     398,007     4,538   98.860%     398,594
+qwen3.6-27b-q4                           humaneval          164     540,434     5,764   98.933%     540,907
+qwen3.6-27b-q4                           mmlu_pro           200     648,158     9,691   98.505%     648,701
+qwen3.6-27b-q4-32k                       gsm8k              200     455,851     5,154   98.869%     456,451
+qwen3.6-27b-q4-32k                       humaneval          164     554,568     6,005   98.917%     555,062
+qwen3.6-27b-q4-32k                       mmlu_pro           200     815,908    11,935   98.537%     816,507
+qwen3.8-27b-nvfp4-a6000                  gsm8k              200      89,229       946   98.940%      89,830
+qwen3.8-27b-nvfp4-a6000                  humaneval          164     300,184     3,099   98.968%     300,661
+qwen3.8-27b-nvfp4-a6000                  mmlu_pro           200     631,308    10,832   98.284%     631,833
+qwen3.8-27b-nvfp4-a6000-mtp              gsm8k              200     103,605     1,014   99.021%     104,202
+qwen3.8-27b-nvfp4-a6000-mtp              humaneval          164     235,408     2,616   98.889%     235,889
+qwen3.8-27b-nvfp4-a6000-mtp              mmlu_pro           200     621,226    10,965   98.235%     621,763
+qwen3.8-27b-nvfp4-a6000-mtp-32k          gpqa_diamond       198   2,338,129    66,059   97.175%   2,338,605
+qwen3.8-27b-nvfp4-a6000-mtp-32k          gsm8k              200      87,052       866   99.005%      87,652
+qwen3.8-27b-nvfp4-a6000-mtp-32k          humaneval          164     307,583     2,819   99.083%     308,085
+qwen3.8-27b-nvfp4-a6000-mtp-32k          livecodebench      175   3,140,540    29,506   99.060%   3,140,873
+qwen3.8-27b-nvfp4-a6000-mtp-32k          mmlu_pro           200     986,457    17,124   98.264%     987,041
+qwen3.8-27b-nvfp4-spark                  gsm8k              200      78,949       830   98.949%      79,549
+qwen3.8-27b-nvfp4-spark                  humaneval          164     273,534     2,976   98.912%     274,010
+qwen3.8-27b-nvfp4-spark                  mmlu_pro           200     678,978    11,798   98.262%     679,494
+
+by task                                                 records      tokens   outside  coverage
+gpqa_diamond                                                396   3,459,283    98,830   97.143%
+gsm8k                                                      1600   1,465,554    16,602   98.867%
+humaneval                                                  1312   2,657,515    30,124   98.866%
+livecodebench                                               350   5,085,487    51,602   98.985%
+mmlu_pro                                                   1600   5,100,067    86,863   98.297%
+ALL                                                        5258  17,767,906   284,021   98.401%
+
+ALL TASKS: 284,021 tokens outside the set, 6,666 distinct ids
+   count   share       id  token
+   7,037   2.48%    85152  ' Hmm'
+   5,831   2.05%    75785  ' methyl'
+   5,366   1.89%    84203  '^{-'
+   4,578   1.61%    92306  'Potential'
+   4,149   1.46%    73174  'Alternative'
+   3,882   1.37%    78365  ' Δ'
+   3,157   1.11%    82776  'dehyde'
+   2,596   0.91%   169286  '✅'
+   2,253   0.79%    81427  'Proceed'
+   2,062   0.73%    68539  ' benz'
+   2,045   0.72%   185168  'hyd'
+   1,978   0.70%   180320  ' substitu'
+   1,847   0.65%    80071  '(CH'
+   1,543   0.54%    66219  'omers'
+   1,530   0.54%    90252  ' brom'
+   1,529   0.54%    75370  '\\['
+   1,519   0.53%   173676  ' ester'
+   1,334   0.47%    67101  'Probably'
+   1,301   0.46%    74574  ' monot'
+   1,281   0.45%    78676  ' proton'
+   1,227   0.43%   169614  '√'
+   1,219   0.43%    79762  ' Suppose'
+   1,175   0.41%   196057  ' inad'
+   1,128   0.40%    81859  ' disjoint'
+   1,105   0.39%    72887  'creasing'
+   1,104   0.39%    65169  'ophile'
+   1,094   0.39%    75579  ' numbering'
+   1,047   0.37%    95200  'topl'
+   1,043   0.37%    68184  'umba'
+   1,023   0.36%    72632  ' recurrence'
+   1,021   0.36%    95134  'romo'
+   1,010   0.36%    82170  ' typo'
+   1,008   0.35%    93144  'rasing'
+     984   0.35%   168977  'Δ'
+     981   0.35%    70664  ' swaps'
+     980   0.35%    95275  ' ν'
+     951   0.33%    70613  ' palindrome'
+     947   0.33%   230389  'ylic'
+     938   0.33%   169103  '≈'
+     936   0.33%    79781  'Poss'
+
+gpqa_diamond: 98,830 tokens outside the set, 2,374 distinct ids
+   count   share       id  token
+   5,812   5.88%    75785  ' methyl'
+   3,109   3.15%    82776  'dehyde'
+   2,744   2.78%    85152  ' Hmm'
+   2,058   2.08%    68539  ' benz'
+   2,031   2.06%   185168  'hyd'
+   1,975   2.00%   180320  ' substitu'
+   1,847   1.87%    80071  '(CH'
+   1,540   1.56%    66219  'omers'
+   1,530   1.55%    90252  ' brom'
+   1,519   1.54%   173676  ' ester'
+   1,232   1.25%    78676  ' proton'
+   1,104   1.12%    65169  'ophile'
+   1,088   1.10%    75579  ' numbering'
+
+gsm8k: 16,602 tokens outside the set, 919 distinct ids
+   count   share       id  token
+   1,366   8.23%   169286  '✅'
+     503   3.03%    66031  ' baskets'
+     463   2.79%    71690  ' Calculation'
+     402   2.42%    81427  'Proceed'
+     390   2.35%    93144  'rasing'
+     388   2.34%    67101  'Probably'
+     337   2.03%    92334  ' petals'
+     324   1.95%    69330  ' ambiguity'
+     287   1.73%    75370  '\\['
+     279   1.68%    85152  ' Hmm'
+     270   1.63%    86549  ' Remaining'
+     257   1.55%    81407  ' Ezra'
+     251   1.51%    73174  'Alternative'
+
+humaneval: 30,124 tokens outside the set, 1,130 distinct ids
+   count   share       id  token
+   1,628   5.40%    92306  'Potential'
+   1,228   4.08%    81427  'Proceed'
+     930   3.09%    72758  'fib'
+     927   3.08%    75767  ' vowels'
+     698   2.32%    73574  ' vowel'
+     688   2.28%    70817  '_pal'
+     584   1.94%    65313  'egers'
+     564   1.87%    67101  'Probably'
+     554   1.84%    79851  ' �'
+     486   1.61%   169286  '✅'
+     471   1.56%    74855  ' conson'
+     470   1.56%    85152  ' Hmm'
+     460   1.53%    73174  'Alternative'
+
+livecodebench: 51,602 tokens outside the set, 1,877 distinct ids
+   count   share       id  token
+   2,314   4.48%    92306  'Potential'
+   2,157   4.18%    73174  'Alternative'
+   1,168   2.26%    85152  ' Hmm'
+   1,099   2.13%    74574  ' monot'
+   1,086   2.10%    81859  ' disjoint'
+   1,043   2.02%    68184  'umba'
+     934   1.81%    72632  ' recurrence'
+     920   1.78%    72887  'creasing'
+     832   1.61%    79762  ' Suppose'
+     816   1.58%    70664  ' swaps'
+     794   1.54%    67521  ' XOR'
+     562   1.09%    70613  ' palindrome'
+     527   1.02%    82248  ' flips'
+
+mmlu_pro: 86,863 tokens outside the set, 3,781 distinct ids
+   count   share       id  token
+   4,671   5.38%    84203  '^{-'
+   3,256   3.75%    78365  ' Δ'
+   2,376   2.74%    85152  ' Hmm'
+   1,175   1.35%   196057  ' inad'
+     865   1.00%    95275  ' ν'
+     836   0.96%    94835  ' resale'
+     834   0.96%    95200  'topl'
+     824   0.95%    75370  '\\['
+     813   0.94%   168977  'Δ'
+     787   0.91%    70207  ' Greenland'
+     779   0.90%    88396  'mathrm'
+     744   0.86%   169286  '✅'
+     723   0.83%    95028  ' viscosity'

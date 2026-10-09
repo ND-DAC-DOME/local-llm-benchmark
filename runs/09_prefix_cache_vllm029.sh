@@ -6,7 +6,7 @@
 # Cost: ~20 min on one GPU; only max_tokens=1 requests. Output: results/run_09_prefix_cache.log
 set -uo pipefail
 cd "$(dirname "$0")/.."
-set -a; . ./config.env; [ -f ./config.local.env ] && . ./config.local.env; set +a
+set -a; . ./config.env; [ -f ./config.local.env ] && . ./config.local.env; [ -f ./.env ] && . ./.env; set +a
 export NAME=bench-vllm-cache GPU=${GPU:-0} PORT=${PORT:-8003}
 for cond in "mtp-on:--speculative-config {\"method\":\"mtp\",\"num_speculative_tokens\":3}" "mtp-off:"; do
   label=${cond%%:*}; extra=${cond#*:}

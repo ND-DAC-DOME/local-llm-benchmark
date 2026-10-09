@@ -5,9 +5,9 @@
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; [ -f "$ROOT/config.env" ] || ROOT="$(dirname "$ROOT")"
-set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; set +a
+set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; [ -f "$ROOT/.env" ] && . "$ROOT/.env"; set +a
 
 SPARK=${SPARK:-$SPARK_URL}
 [ -n "$SPARK" ] || { echo "set SPARK_URL in config.local.env (e.g. http://<spark-host>:18300/v1)"; exit 1; }
-.venv/bin/python bench.py --base-url "$SPARK" --model qwen3.8-27b --run-name qwen3.8-27b-nvfp4-spark \
+uv run bench.py --base-url "$SPARK" --api-key "${SPARK_API_KEY:-none}" --model qwen3.8-27b --run-name qwen3.8-27b-nvfp4-spark \
   --limit 200 --temperature 1.0 --top-p 0.95 --max-tokens 12288 --concurrency 3 --speed-concurrency 1

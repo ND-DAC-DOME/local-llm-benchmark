@@ -6,3 +6,4 @@ results/*.log
 results/*.sh
 results/*/summary.before_speed.json
 .venv-judge/
+.env

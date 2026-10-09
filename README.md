@@ -25,7 +25,7 @@ Datasets and grading: [`benchmarks.md`](benchmarks.md). Vendor-published SWE-ben
 | `serve_vllm_nvfp4.sh` | Serve an NVFP4 checkpoint with vLLM on an A6000; parameterized by env vars (model, GPU, port, MTP, ...). |
 | `patches/humming_utils.py`, `.patch`, `README.md` | 3-line fix for a vLLM 0.29.0 crash on the FP8 `lm_head` of `unsloth/Qwen3.8-27B-NVFP4` in the Marlin (Ampere) path. Bind-mounted over the installed file. |
 | `runs/01..09_*.sh` | One script per configuration that was actually run. This is the reproduction entry point. |
-| `config.env` | Shared settings: HF cache path, container images pinned by digest, Spark URL. Override in `config.local.env` (git-ignored). |
+| `config.env` | Shared settings: HF cache path, container images pinned by digest, Spark URL and API key slot. Override in `config.local.env` or `.env` (both git-ignored). |
 | `pyproject.toml`, `uv.lock` | Python dependencies, pinned; the `judge` group is the LiveCodeBench judge environment. |
 | `tools/check_prefix_cache.py`, `tools/prefix_cache_scenarios.py`, `tools/spark_inspect.sh` | Latency-based prefix-cache checks for any vLLM server (robust to other users; five usage patterns; `--long` for the 129k-token test) and a read-only inspection of a vLLM server's `/metrics`. Used on the Spark and in run 9. |
 | `docs/spark-measurements.md` | Provenance of every Spark number in `results.md`: the exact command behind each one. |
@@ -59,6 +59,8 @@ UV_PROJECT_ENVIRONMENT=.venv-judge uv sync --group judge         # LiveCodeBench
 # add a dependency: uv add <pkg>   (or uv add --group judge <pkg> for the judge env); never uv pip install
 # 2. Machine settings: copy and edit. HF_CACHE = where model weights are cached; SPARK_URL only for runs/05.
 printf 'HF_CACHE=/path/to/huggingface/cache\nSPARK_URL=http://<spark-host>:18300/v1\n' > config.local.env
+#    If the Spark's server requires a key, put SPARK_API_KEY=... in .env or config.local.env (both git-ignored);
+#    bench.py and tools/ send it as a bearer token (bench.py also honours OPENAI_API_KEY).
 # 3. Container images are pinned by digest in config.env (llama.cpp build 11011, vLLM 0.29.0); docker pulls them on first use.
 # 4. After the first GGUF download, check the files are the ones used here:
 ./verify_models.sh

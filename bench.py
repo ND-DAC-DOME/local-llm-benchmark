@@ -419,7 +419,8 @@ def main():
     p.add_argument("--base-url", required=True)
     p.add_argument("--model", required=True, help="model id as the server exposes it")
     p.add_argument("--run-name", required=True)
-    p.add_argument("--api-key", default="none")
+    p.add_argument("--api-key", default=os.environ.get("OPENAI_API_KEY") or os.environ.get("SPARK_API_KEY") or "none",
+                   help="bearer token for the server; defaults to $OPENAI_API_KEY or $SPARK_API_KEY, else a placeholder")
     p.add_argument("--tasks", default="gsm8k,mmlu_pro,humaneval,speed")
     p.add_argument("--limit", type=int, default=200, help="items per task (0 = full set)")
     p.add_argument("--system", default="", help="e.g. 'Reasoning strength: high'")

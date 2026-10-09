@@ -1,6 +1,6 @@
 # How every Spark number in `results.md` was obtained
 
-Nothing was installed or changed on the Spark. All measurements are network requests to its vLLM server
+Nothing was installed or changed on the Spark. If the server requires a key, export `SPARK_API_KEY` (or put it in `.env`); every command below sends it. All measurements are network requests to its vLLM server
 (`SPARK_URL`, port 18300) or read-only shell commands run there by a team member. Dates are 2026-09-18..21.
 
 | Number in the report | How it was measured | Reproduce with |
