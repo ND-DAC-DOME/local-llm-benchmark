@@ -445,7 +445,10 @@ def main():
         http_client = httpx.Client(verify=False, timeout=1800)
     client = OpenAI(base_url=args.base_url, api_key=args.api_key, timeout=1800, http_client=http_client)
 
-    summary = {"config": vars(args), "started": time.strftime("%Y-%m-%d %H:%M:%S"), "tasks": {}}
+    config = dict(vars(args))
+    if config["api_key"] != "none":
+        config["api_key"] = "<redacted>"  # keep keys out of results/
+    summary = {"config": config, "started": time.strftime("%Y-%m-%d %H:%M:%S"), "tasks": {}}
     if (outdir / "summary.json").exists():  # re-running one task keeps the others' results
         summary["tasks"] = json.loads((outdir / "summary.json").read_text())["tasks"]
     for name in args.tasks.split(","):
