@@ -1,0 +1,9 @@
+vllm:spec_decode_num_drafts_total{engine="0",model_name="qwen3.8-flash-next"} 94998.0
+vllm:spec_decode_num_draft_tokens_total{engine="0",model_name="qwen3.8-flash-next"} 189996.0
+vllm:spec_decode_num_accepted_tokens_total{engine="0",model_name="qwen3.8-flash-next"} 117973.0
+vllm:spec_decode_num_accepted_tokens_per_pos_total{engine="0",model_name="qwen3.8-flash-next",position="0"} 67355.0
+vllm:spec_decode_num_accepted_tokens_per_pos_total{engine="0",model_name="qwen3.8-flash-next",position="1"} 50618.0
+vllm:prefix_cache_queries_total{engine="0",model_name="qwen3.8-flash-next"} 1.7820752e+07
+vllm:prefix_cache_hits_total{engine="0",model_name="qwen3.8-flash-next"} 1.7323648e+07
+vllm:prompt_tokens_total{engine="0",model_name="qwen3.8-flash-next"} 1.7820752e+07
+vllm:generation_tokens_total{engine="0",model_name="qwen3.8-flash-next"} 212984.0

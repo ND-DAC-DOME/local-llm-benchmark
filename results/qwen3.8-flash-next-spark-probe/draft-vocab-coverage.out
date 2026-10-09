@@ -1,0 +1,54 @@
+draft set: 65,536 ids (min 0, max 248076); tokenizer vocab: 248,077
+
+run                                      task           records      tokens   outside  coverage  server tok
+qwen3.8-flash-next-spark-probe           gsm8k               40      31,413       296   99.058%      31,533
+qwen3.8-flash-next-spark-probe           humaneval           40      57,778       724   98.747%      57,896
+
+by task                                                 records      tokens   outside  coverage
+gsm8k                                                        40      31,413       296   99.058%
+humaneval                                                    40      57,778       724   98.747%
+ALL                                                          80      89,191     1,020   98.856%
+
+ALL TASKS: 1,020 tokens outside the set, 212 distinct ids
+   count   share       id  token
+      94   9.22%    92306  'Potential'
+      73   7.16%    65313  'egers'
+      56   5.49%    82478  ' vines'
+      28   2.75%    74525  " '**"
+      24   2.35%    85252  '[op'
+      24   2.35%    67521  ' XOR'
+      23   2.25%    65277  ' GSM'
+      23   2.25%    76382  '(operator'
+      23   2.25%    74554  ' unequal'
+      22   2.16%    73846  '_xor'
+      21   2.06%    85152  ' Hmm'
+      17   1.67%    69330  ' ambiguity'
+      16   1.57%    65619  'Jean'
+      16   1.57%    72758  'fib'
+      15   1.47%    72128  '_odd'
+
+gsm8k: 296 tokens outside the set, 79 distinct ids
+   count   share       id  token
+      56  18.92%    82478  ' vines'
+      23   7.77%    65277  ' GSM'
+      16   5.41%    65619  'Jean'
+      15   5.07%    69330  ' ambiguity'
+      13   4.39%    85152  ' Hmm'
+      11   3.72%    67615  ' comet'
+      10   3.38%    75370  '\\['
+       8   2.70%    89485  ' sighting'
+       7   2.36%    94715  ' Comet'
+       7   2.36%    66803  ' rabbits'
+
+humaneval: 724 tokens outside the set, 141 distinct ids
+   count   share       id  token
+      91  12.57%    92306  'Potential'
+      73  10.08%    65313  'egers'
+      28   3.87%    74525  " '**"
+      24   3.31%    85252  '[op'
+      24   3.31%    67521  ' XOR'
+      23   3.18%    76382  '(operator'
+      23   3.18%    74554  ' unequal'
+      22   3.04%    73846  '_xor'
+      16   2.21%    72758  'fib'
+      15   2.07%    72128  '_odd'

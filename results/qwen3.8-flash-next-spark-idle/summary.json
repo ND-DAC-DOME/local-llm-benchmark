@@ -1,0 +1,56 @@
+{
+  "config": {
+    "base_url": "https://10.41.32.107/v1",
+    "model": "qwen3.8-flash-next",
+    "run_name": "qwen3.8-flash-next-spark-idle",
+    "api_key": "<redacted>",
+    "tasks": "speed,gsm8k",
+    "limit": 20,
+    "system": "",
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "max_tokens": 12288,
+    "retry_truncated_from": "",
+    "concurrency": 1,
+    "speed_concurrency": "1",
+    "prefill_tokens": "1024,4096,12288"
+  },
+  "started": "2026-10-09 13:58:46",
+  "tasks": {
+    "speed": {
+      "concurrency_1": {
+        "requests": 3,
+        "median_ttft_s": 0.22,
+        "median_decode_tok_s_per_stream": 36.23,
+        "aggregate_tok_s": 34.72
+      },
+      "prefill": {
+        "~1024_tokens": {
+          "median_prompt_tokens": 1100,
+          "median_ttft_s": 0.725,
+          "median_prefill_tok_s": 1546.0
+        },
+        "~4096_tokens": {
+          "median_prompt_tokens": 4243,
+          "median_ttft_s": 1.976,
+          "median_prefill_tok_s": 2150.3
+        },
+        "~12288_tokens": {
+          "median_prompt_tokens": 12472,
+          "median_ttft_s": 4.838,
+          "median_prefill_tok_s": 2594.3
+        }
+      }
+    },
+    "gsm8k": {
+      "n": 20,
+      "scored": 20,
+      "correct": 20,
+      "accuracy": 1.0,
+      "errors": 0,
+      "truncated": 0,
+      "mean_completion_tokens": 318,
+      "mean_seconds": 8.4
+    }
+  }
+}

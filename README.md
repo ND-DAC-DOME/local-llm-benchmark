@@ -10,6 +10,7 @@ A small, auditable test bed for comparing locally served models under identical 
 - With a tighter budget (12k) Muse is ahead (MMLU-Pro 82% vs 73–77%), because the Qwens run out of tokens before answering, not because they reason worse. On LiveCodeBench Qwen3.8 does not finish 38% of the problems even at 32k (Muse 79%, Qwen3.8 60%).
 - The Qwens use 2–3× the tokens per answer to reach the same score. Which model is "better" depends on how long an answer may take in the intended use.
 - Quantization, speculative decoding (MTP / DFlash) and the machine (A6000 vs DGX Spark) do not change the scores; they change speed. Same model and recipe: 50.8 tok/s on the A6000, 20.3 on the Spark.
+- The Spark's newer deployment (Qwen3.8-Flash-Next, a 125B/6B MoE, vLLM 0.31; a different model) decodes at 36.2 tok/s, prefills long prompts faster (2,594 tok/s at 12k) and its prefix cache now hits (20k-token repeat 7.1 s → 0.27 s). MTP accepts 62% of drafted tokens; 98.4% of the study's generated tokens fall inside its reduced 65k draft vocabulary.
 
 Datasets and grading: [`benchmarks.md`](benchmarks.md). Vendor-published SWE-bench numbers (not reproduced here): [`swe-bench-cards.md`](swe-bench-cards.md).
 
@@ -24,10 +25,12 @@ Datasets and grading: [`benchmarks.md`](benchmarks.md). Vendor-published SWE-ben
 | `speed_only.sh` | Re-measure only speed/prefill for an existing llama.cpp run, keeping its scores. |
 | `serve_vllm_nvfp4.sh` | Serve an NVFP4 checkpoint with vLLM on an A6000; parameterized by env vars (model, GPU, port, MTP, ...). |
 | `patches/humming_utils.py`, `.patch`, `README.md` | 3-line fix for a vLLM 0.29.0 crash on the FP8 `lm_head` of `unsloth/Qwen3.8-27B-NVFP4` in the Marlin (Ampere) path. Bind-mounted over the installed file. |
-| `runs/01..09_*.sh` | One script per configuration that was actually run. This is the reproduction entry point. |
-| `config.env`, `env.sh` | Shared settings (HF cache path, container images pinned by digest, Spark URL, key and CA slots) and the loader every script sources; overrides go in `config.local.env` or `.env` (both git-ignored). |
+| `runs/01..10_*.sh` | One script per configuration that was actually run. This is the reproduction entry point. |
+| `config.env`, `env.sh` | Shared settings (HF cache path, container images pinned by digest, Spark URL, key and CA slots) and the loader every script sources; overrides go in `config.local.env` or `.env` (both git-ignored). `env.sh` builds `<spark-ca>-plus-system.crt` (system CAs + the Spark's private CA) and points `SSL_CERT_FILE` / `CURL_CA_BUNDLE` at it, so the Spark verifies and Hugging Face downloads keep working. |
 | `pyproject.toml`, `uv.lock` | Python dependencies, pinned; the `judge` group is the LiveCodeBench judge environment. |
 | `tools/check_prefix_cache.py`, `tools/prefix_cache_scenarios.py`, `tools/spark_inspect.sh` | Latency-based prefix-cache checks for any vLLM server (robust to other users; five usage patterns; `--long` for the 129k-token test) and a read-only inspection of a vLLM server's `/metrics`. Used on the Spark and in run 9. |
+| `tools/spark-idle-run.sh`, `tools/metrics-delta.py` | Run `bench.py` against the Spark only when it is idle (request count sampled every 15 s, `/metrics` snapshots before and after) and turn the two snapshots into MTP acceptance and prefix-cache figures that belong to that run alone. |
+| `tools/draft-vocab-coverage.py`, `tools/draft_vocab_65536.npy`, `tools/draft-vocab-coverage.out` | Share of generated tokens (per saved run and task) that fall inside the Spark drafter's 65k-id vocabulary; needs the Flash-Next tokenizer, kept outside the repo. |
 | `docs/spark-measurements.md` | Provenance of every Spark number in `results.md`: the exact command behind each one. |
 | `MODELS.md`, `verify_models.sh` | Model repositories, snapshots and SHA-256 of the GGUF files; script to verify a local cache against them. |
 | `docs/spark-qwen3.8-27b-recipe.yaml` | The DGX Spark's serving recipe that runs 2, 3 and 5 derive from; verified against the live server (details in `docs/spark-measurements.md`). |
@@ -47,6 +50,7 @@ Datasets and grading: [`benchmarks.md`](benchmarks.md). Vendor-published SWE-ben
 | 7 | `muse-glimmer-30b-q4-dflash`, `muse-glimmer-30b-nvfp4-a6000-dflash` (15 draft tokens), `...-dflash5` (5) | as runs 1, 4 | llama.cpp / vLLM | A6000 | **speed only**, with speculative decoding: DFlash (unsloth `dflash-kquant.gguf` for llama.cpp, `meta-models/Muse-Glimmer-30B-assistant` for vLLM). Qwen3.6 `draft-mtp` was attempted and cannot run: the unsloth GGUF has no MTP layers. |
 | 8 | `qwen3.8-27b-nvfp4-a6000-mtp-32k`, `muse-glimmer-30b-q4-dflash-32k` | as runs 3 and 7 | vLLM / llama.cpp | A6000 | MTP / DFlash. **GPQA Diamond (198) and LiveCodeBench v6 (175)** at a 32k budget, then speed on the same servers. AIME was dropped (vendors report 94–95%: no headroom); Qwen3.6 left out by decision. |
 | 9 | (no scores; log in `results/run_09_prefix_cache.log`) | `unsloth/Qwen3.8-27B-NVFP4` | vLLM 0.29.0 | A6000 | **prefix-cache check**, MTP on and off, five usage patterns; the same check on the Spark is in `docs/spark-measurements.md`. |
+| 10 | `qwen3.8-flash-next-spark-idle` (speed, GSM8K 20, prefix-cache scenarios), `...-probe` (GSM8K 40, HumanEval 40; speed discarded, server was shared) | `nvidia/Qwen3.8-Flash-Next-NVFP4`, served id `qwen3.8-flash-next` | team image: vLLM 0.31 + Spark patches | DGX Spark, over HTTPS | MTP, 2 draft tokens, reduced 65k draft vocabulary. **A different model** from runs 2–5. |
 
 Common settings: temperature 1.0, top_p 0.95 (both vendors' recommendation), seed 1234, 200 fixed items for GSM8K and MMLU-Pro, all 164 HumanEval, all 198 GPQA Diamond, all 175 LiveCodeBench v6; 12,288 completion tokens unless the run name says `32k`; 3 requests in flight (2 for Muse on the hard tasks). Muse gets the system prompt `Reasoning strength: high` and top_k 64; Qwens run in their default thinking mode with top_k 20. Reasoning is returned separately by the server and is never scored.
 
@@ -73,6 +77,7 @@ GPU=1 ./runs/03_vllm_qwen3.8_nvfp4_mtp.sh   # needs a free 48 GB GPU
 ./runs/07_speculative_speed.sh          # needs both GPUs free
 ./runs/08_hard_tasks.sh                 # GPQA Diamond + LiveCodeBench v6 at 32k, then speed; needs both GPUs free
 ./runs/09_prefix_cache_vllm029.sh       # prefix-cache check, vLLM 0.29 + MTP on/off (~20 min, one GPU)
+./runs/10_spark_flash_next.sh           # the Spark's Flash-Next deployment, idle-only; needs SPARK_* in .env (~30 min on the Spark)
 uv run compare.py
 ```
 

@@ -10,6 +10,7 @@ All weights come from Hugging Face. The snapshot is the repository commit that w
 | 2, 3, 8, 9 | `unsloth/Qwen3.8-27B-NVFP4` | `f0b7c9e722f5565102fff8481c99e4d86ae099c7` | safetensors, 23.4 GB: NVFP4 MLPs (layers 0-55) 8.4 GB, FP8 MLPs (layers 56-63) 2.1 GB, FP8 attention + lm_head 8.5 GB, BF16 embeddings 2.5 + MTP head 0.85 + vision 0.9 | pinned by `--revision` |
 | 5 (Spark) | `unsloth/Qwen3.8-27B-NVFP4` | `57926baca9a82b4d6906b43f2750d55315f5b10f` | same weights (only README commits between the two) | — |
 | 4, 7 | `nvidia/Muse-Glimmer-30B-NVFP4` | `47818374517751c48c55cde2621594926b1888b6` | safetensors, 24.7 GB (ModelOpt AutoQuant: NVFP4/FP8/BF16) | pinned by `--revision` |
+| 10 (Spark) | `nvidia/Qwen3.8-Flash-Next-NVFP4` | `fc694b54fb0174e0913e6adf86691ef85a4ead47` as named in the server's model path (`-fp8hybrid` suffix); not downloaded here | served by the team's `qwen38-flash-next-spark` image as model id `qwen3.8-flash-next` (alias `qwen3.8-27b` points to it too). ModelOpt mixed precision: routed experts NVFP4, attention / shared experts / other layers FP8 ("fp8hybrid"), MTP head included | — (not on this machine) |
 | 7 | `meta-models/Muse-Glimmer-30B-assistant` | `e8192f3a8f617f74be2ce220360c89ef4789f39f` | DFlash drafter for vLLM, 5.1 GB BF16 | pinned by `revision` in `--speculative-config` |
 
 vLLM runs pin the snapshot on the command line. llama.cpp's `-hf repo:quant` cannot pin a commit, so check the GGUF files after download:

@@ -1,0 +1,5 @@
+A) exact repeat, ~6k tokens                             first   2.39s (6072 tok) | second   0.25s (6072 tok) | hits +0 / +5952
+B) exact repeat, first call generates 64 tokens         first   3.57s (6072 tok) | second   0.26s (6072 tok) | hits +0 / +5952
+C) exact repeat, ~20k tokens (chunked prefill)          first   7.14s (20072 tok) | second   0.27s (20072 tok) | hits +0 / +19968
+D) same ~6k system prompt, different question           first   2.43s (6079 tok) | second   0.27s (6076 tok) | hits +0 / +5952
+E) multi-turn continuation of a ~6k conversation        first   3.68s (6072 tok) | second   0.39s (6093 tok) | hits +5952

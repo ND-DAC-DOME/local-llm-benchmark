@@ -1,6 +1,6 @@
 # Muse-Glimmer-30B vs Qwen3.6-27B vs Qwen3.8-27B — results
 
-Runs on 2026-09-17..22 (all complete) on a workstation with 2× RTX A6000 48 GB and, for one run, on the team's DGX Spark over the network. Same 200 questions (GSM8K, MMLU-Pro; seed 1234), all 164 HumanEval problems, same prompts, temperature 1.0 / top_p 0.95, 12,288-token completion budget unless stated. A truncated answer counts as wrong. Every wrong answer of every run was inspected; there were no request errors and no answer-parsing failures in any run. Reproduction: `README.md`, `runs/`.
+Runs on 2026-09-17..22 plus the Spark re-measurement of 2026-10-09 (all complete) on a workstation with 2× RTX A6000 48 GB and, for runs 5 and 10, on the team's DGX Spark over the network. Same 200 questions (GSM8K, MMLU-Pro; seed 1234), all 164 HumanEval problems, same prompts, temperature 1.0 / top_p 0.95, 12,288-token completion budget unless stated. A truncated answer counts as wrong. Every wrong answer of every run was inspected; there were no request errors and no answer-parsing failures in any run. Reproduction: `README.md`, `runs/`.
 
 ## 1. Quality
 
@@ -133,6 +133,33 @@ The Spark's operator observed that speculative decoding seemed to disable prefix
 
 So it is the vLLM version, not MTP: 0.29 caches with MTP on (2× faster repeats; it keeps the cache in 1,600-token blocks under speculative decoding on this hybrid model, "dense checkpointing") and caches better without it (4×, 224-token blocks). A vLLM upgrade on the Spark should restore prefix caching with MTP kept on. Caveat: the Spark runs `max_num_seqs 4` and a 262k context, the A6000 test used 3 and 131k. Log: `results/run_09_prefix_cache.log`; reproduce with `runs/09_prefix_cache_vllm029.sh`.
 
+## 2c. The Spark's new model: Qwen3.8-Flash-Next (run 10, 2026-10-09)
+
+The Spark now serves `nvidia/Qwen3.8-Flash-Next-NVFP4` (a 125B-total / 6B-active mixture-of-experts, hybrid attention, 4B MTP head) through a team-built image (vLLM 0.31 + Spark patches, MTP with 2 draft tokens and a reduced 65k draft vocabulary), behind HTTPS with a key. **This is a different model from run 5's Qwen3.8-27B, not the same model on a new server**; the "before/after" below compares two deployments, not two versions of one model. Numbers are from a run with the server verified idle (`results/qwen3.8-flash-next-spark-idle/`, request count sampled every 15 s, max 1 = ours). A larger "probe" run (`...-probe/`) overlapped with a teammate's session; its quality scores are kept, its speed and acceptance figures are not used.
+
+| Spark, single request | Qwen3.8-27B NVFP4, vLLM 0.26.1 (run 5) | Qwen3.8-Flash-Next NVFP4, vLLM 0.31 (run 10) |
+|---|---|---|
+| Decode, tok/s | 20.3 | **36.2** |
+| TTFT, short prompt | 0.25 s | 0.22 s |
+| Prefill ~1k / ~4k / ~12k tokens | 2,189 / 1,846 / 1,355 | 1,546 / **2,150** / **2,594** |
+| Prefix cache: exact repeat, 6k tokens | 3.05 s → 3.05 s (no hit) | 2.39 s → **0.25 s** |
+| Prefix cache: exact repeat, 20k tokens | 16.7 s → 16.7 s (no hit) | 7.14 s → **0.27 s** |
+| Prefix cache: shared 6k system prompt | 3.42 s (no hit) | 2.43 s → **0.27 s** |
+| Prefix cache: multi-turn continuation | 3.47 s (no hit) | 3.68 s → **0.39 s** |
+| MTP acceptance per drafted token / tokens per step | 52.6% / 2.6 (3 draft tokens; cumulative counters) | **62.2% / 2.24** (2 draft tokens; this run's own delta, 7,044 drafted tokens on GSM8K); 68.2% / 2.36 cumulative since boot at the start of the probe run, mixed traffic |
+
+Quality on the same prompts and settings as the main study (small samples): GSM8K 60/60 (40 probe + 20 idle), HumanEval 39/40 (1 truncated at 12,288 tokens). Not a ranking against the other models; the samples are too small and the budget experiment was not repeated.
+
+**Draft-vocabulary coverage.** The image's MTP drafter proposes only token ids from a fixed 65,536-id set; the target model verifies every proposal against its full output head, so output is unchanged and only the acceptance rate can suffer. `tools/draft-vocab-coverage.py` re-tokenizes every saved reasoning trace and answer of this study with the Flash-Next tokenizer and counts how many generated tokens fall outside that set:
+
+| Text | Tokens | Inside the 65k set |
+|---|---|---|
+| All saved traces of the study (Muse, Qwen3.6, Qwen3.8 runs) | 17.77M | 98.40% |
+| by task: LiveCodeBench / GSM8K / HumanEval / MMLU-Pro / GPQA Diamond | | 98.99 / 98.87 / 98.87 / 98.30 / 97.14% |
+| Real Flash-Next output (probe run) | 89k | 98.86% (GSM8K 99.06, HumanEval 98.75) |
+
+The set is effectively ids 0–65,535 (64,902 of its entries) plus 634 higher ids, i.e. BPE merge order rather than usage. What falls out are mostly line-start variants that reasoning uses (" Hmm", "Potential", "Proceed", "Probably" without a leading space, " Δ", chemistry pieces such as " methyl", " benz", " brom"), while the mid-sentence variants are in; only 6,666 distinct ids are ever missed and the top 40 account for 27% of misses. Ceiling on the effect: at most ~1.6 points of acceptance on this text. A list built from reasoning traces would recover it for ~10% more rows, or at equal size by dropping unused low ids. Not tested on the server (needs a restart with a new list; the operator's call).
+
 ## 3. Failure audit
 
 - Every wrong answer was classified as truncated / wrong answer / parser miss / harness error. Parser misses: 0 in all runs. Harness error: the 4 Muse HumanEval "failures" in the very first pass (prompt helper functions not in scope) — fixed, re-scored, and every later run used the fixed scorer.
@@ -151,5 +178,6 @@ So it is the vLLM version, not MTP: 0.29 caches with MTP on (2× faster repeats;
 
 - Our prompts and parsers; scores compare these models under identical conditions and are not comparable to public leaderboards.
 - No agentic / SWE-bench-style task. Vendor SWE-bench numbers: `swe-bench-cards.md`. LiveCodeBench (run 8) is single-shot competitive programming, not an agentic workflow.
+- Run 10 measures a different model on the Spark (Flash-Next, 125B/6B MoE) than runs 2–5 (Qwen3.8-27B); its quality samples are small (60 + 40 items) and its probe run overlapped with another user, so only the idle run's speed and acceptance figures are reported.
 - All weights are 4-bit (or mixed 4/8-bit); vendor model-card numbers are presumably full precision.
 - Speed on the A6000 was measured with the other GPU busy with a different run for part of the time; CPU contention is possible but decode speed is GPU-bound.
