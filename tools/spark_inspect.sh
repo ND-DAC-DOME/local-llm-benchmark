@@ -4,7 +4,7 @@
 # on the Spark. Usage: tools/spark_inspect.sh [http://<spark-host>:18300]
 set -uo pipefail
 U=${1:-${SPARK_URL:-http://localhost:18300}}; U=${U%/v1}
-AUTH=(); [ -n "${SPARK_API_KEY:-}" ] && AUTH=(-H "Authorization: Bearer $SPARK_API_KEY")
+AUTH=(--noproxy "*"); [ -n "${SPARK_API_KEY:-}" ] && AUTH+=(-H "Authorization: Bearer $SPARK_API_KEY"); [ "${SPARK_INSECURE:-}" = 1 ] && AUTH+=(-k)
 M=$(curl -s -m 10 "${AUTH[@]}" "$U/metrics") || { echo "cannot reach $U/metrics"; exit 1; }
 g() { echo "$M" | grep -E "^vllm:$1\{" | head -1 | awk '{print $NF}'; }
 echo "== served model";           curl -s -m 10 "${AUTH[@]}" "$U/v1/models" | python3 -c "import sys,json; [print(' ',m['id'],'->',m.get('root')) for m in json.load(sys.stdin)['data']]"

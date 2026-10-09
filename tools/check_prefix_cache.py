@@ -11,7 +11,7 @@ Method: for each pair, send a NEW long prompt (cold), then the SAME prompt again
     and left out of the verdict. Global hit counters are printed only as a secondary, noisy signal.
 Standard library only. Load: 2 short requests per pair.
 """
-import argparse, os, json, random, re, statistics, time, urllib.request
+import argparse, os, ssl, json, random, re, statistics, time, urllib.request
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--url", default="http://localhost:18300")
@@ -22,11 +22,12 @@ ap.add_argument("--repeat", type=int, default=600, help="filler sentences; 600 ~
 ap.add_argument("--long", action="store_true", help="one pair with a ~129k-token prompt (12900 sentences), as run on the Spark on 2026-09-21; occupies the server for ~6 min")
 a = ap.parse_args()
 HDR = {"Authorization": "Bearer " + a.api_key} if a.api_key else {}
+CTX = ssl._create_unverified_context() if os.environ.get("SPARK_INSECURE") == "1" else None  # private CA not installed yet
 if a.long:
     a.repeat, a.pairs = 12900, 1
 
 def metric(name):
-    txt = urllib.request.urlopen(urllib.request.Request(a.url + "/metrics", headers=HDR), timeout=30).read().decode()
+    txt = urllib.request.urlopen(urllib.request.Request(a.url + "/metrics", headers=HDR), timeout=30, context=CTX).read().decode()
     m = re.search(r"^vllm:" + name + r"\{[^}]*\}\s+([\d.e+]+)", txt, re.M)
     return float(m.group(1)) if m else None
 
@@ -35,7 +36,7 @@ def ask(prompt):
                        "messages": [{"role": "user", "content": prompt}]}).encode()
     req = urllib.request.Request(a.url + "/v1/chat/completions", body, {"Content-Type": "application/json", **HDR})
     t0 = time.time()
-    r = json.load(urllib.request.urlopen(req, timeout=600))
+    r = json.load(urllib.request.urlopen(req, timeout=600, context=CTX))
     u = r.get("usage") or {}
     cached = (u.get("prompt_tokens_details") or {}).get("cached_tokens")  # only if the server reports it
     return time.time() - t0, u.get("prompt_tokens"), cached

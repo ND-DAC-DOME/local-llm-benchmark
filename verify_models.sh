@@ -2,7 +2,7 @@
 # Check that the GGUF files in the local Hugging Face cache are byte-identical to the ones used for the published results.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; [ -f "$ROOT/.env" ] && . "$ROOT/.env"; set +a
+. "$ROOT/env.sh"
 rc=0
 check() {  # check <repo dir> <file> <sha256>
   local f; f=$(ls "$HF_CACHE"/hub/"$1"/snapshots/*/"$2" 2>/dev/null | head -1)

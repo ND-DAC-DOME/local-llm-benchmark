@@ -10,8 +10,8 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; [ -f "$ROOT/config.env" ] || ROOT="$(dirname "$ROOT")"
-set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; [ -f "$ROOT/.env" ] && . "$ROOT/.env"; set +a
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; [ -f "$ROOT/env.sh" ] || ROOT="$(dirname "$ROOT")"
+. "$ROOT/env.sh"
 
 HF=$HF_CACHE
 TASKS=${TASKS:-gpqa_diamond,livecodebench}

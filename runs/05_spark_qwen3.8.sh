@@ -4,8 +4,8 @@
 # Spark being otherwise idle. Results: results/qwen3.8-27b-nvfp4-spark/
 cd "$(dirname "$0")/.."
 # shellcheck disable=SC1091
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; [ -f "$ROOT/config.env" ] || ROOT="$(dirname "$ROOT")"
-set -a; . "$ROOT/config.env"; [ -f "$ROOT/config.local.env" ] && . "$ROOT/config.local.env"; [ -f "$ROOT/.env" ] && . "$ROOT/.env"; set +a
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; [ -f "$ROOT/env.sh" ] || ROOT="$(dirname "$ROOT")"
+. "$ROOT/env.sh"
 
 SPARK=${SPARK:-$SPARK_URL}
 [ -n "$SPARK" ] || { echo "set SPARK_URL in config.local.env (e.g. http://<spark-host>:18300/v1)"; exit 1; }

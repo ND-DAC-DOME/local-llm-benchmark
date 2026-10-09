@@ -439,7 +439,11 @@ def main():
 
     outdir = Path(__file__).parent / "results" / args.run_name
     outdir.mkdir(parents=True, exist_ok=True)
-    client = OpenAI(base_url=args.base_url, api_key=args.api_key, timeout=1800)
+    http_client = None
+    if os.environ.get("SPARK_INSECURE") == "1":  # private CA not installed yet: skip TLS verification on purpose
+        import httpx
+        http_client = httpx.Client(verify=False, timeout=1800)
+    client = OpenAI(base_url=args.base_url, api_key=args.api_key, timeout=1800, http_client=http_client)
 
     summary = {"config": vars(args), "started": time.strftime("%Y-%m-%d %H:%M:%S"), "tasks": {}}
     if (outdir / "summary.json").exists():  # re-running one task keeps the others' results
