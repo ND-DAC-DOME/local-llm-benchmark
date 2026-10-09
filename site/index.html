@@ -34,6 +34,7 @@
 <li><strong>Same checkpoint, same scores on the Spark and on the A6000.</strong> Three Qwen3.8 runs land within ±1.5 points, which is also the noise level to read every table with.</li>
 <li><strong>Speculative decoding (MTP, DFlash) changes speed, not answers.</strong> Qwen3.8 31.8 → 50.8 tok/s; Muse 38.5 → 56.5 tok/s. See <a href="speed.html">Speed</a>.</li>
 <li><strong>The A6000 decodes 2.5× faster than the Spark</strong> on the same model and recipe; prefill is about equal. The Spark's config is well tuned; it is memory-bandwidth bound.</li>
+<li><strong>The Spark's newer deployment is faster and its prefix cache works</strong>: Qwen3.8-Flash-Next (a 125B/6B mixture-of-experts, a different model) on vLLM 0.31 decodes at 36.2 tok/s and a 20k-token repeat drops from 7.1 s to 0.27 s. Details on the <a href="speed.html">Speed</a> page.</li>
 </ul>
 <p class="small">Not measured: agentic / SWE-bench-style work. Vendor-published SWE-bench numbers are in the repository (<code>swe-bench-cards.md</code>). See <a href="caveats.html">Caveats</a>.</p>
 </main></div>

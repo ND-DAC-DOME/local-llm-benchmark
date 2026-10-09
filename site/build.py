@@ -104,6 +104,7 @@ speeds = {
     "qwen36_q4": speed("qwen3.6-27b-q4"),
     "qwen38_nomtp": speed("qwen3.8-27b-nvfp4-a6000"), "qwen38_mtp": speed("qwen3.8-27b-nvfp4-a6000-mtp"),
     "qwen38_spark": speed("qwen3.8-27b-nvfp4-spark"),
+    "flashnext_spark": speed("qwen3.8-flash-next-spark-idle"),  # different model (125B/6B MoE), idle-verified run
 }
 # the three Qwen3.8 executions (noise / hardware independence)
 qwen38_runs = {}
@@ -122,15 +123,26 @@ prefix_cache = {
         "Spark, vLLM 0.26.1 + MTP": {"first": [3.05, 16.69, 3.44, 6.18], "second": [3.05, 16.69, 3.42, 3.47], "hits": [0, 0, 0, 0]},
         "A6000, vLLM 0.29 + MTP": {"first": [3.25, 11.58, 3.29, 4.26], "second": [1.60, 1.70, 1.62, 1.64], "hits": [3200, 17600, 3200, 3200]},
         "A6000, vLLM 0.29, no MTP": {"first": [3.20, 11.32, 3.25, 5.05], "second": [0.81, 0.92, 0.82, 0.83], "hits": [4704, 18816, 4704, 4704]},
+        "Spark, vLLM 0.31 + MTP (Flash-Next, a different model; run 10)": {"first": [2.39, 7.14, 2.43, 3.68], "second": [0.25, 0.27, 0.27, 0.39], "hits": [5952, 19968, 5952, 5952]},
     },
     "spark_129k": {"first": 164.65, "second": 165.23, "prefill_tok_s": 784, "tokens": 129072},
     "note": "Multi-turn 'first' includes generating 64 tokens; compare the second calls.",
+}
+# Run 10 (results/qwen3.8-flash-next-spark-idle, metrics delta; probe run for coverage): see results.md section 2c
+flashnext = {
+    "model": "nvidia/Qwen3.8-Flash-Next-NVFP4 (125B total / 6B active MoE, 4B MTP head), served as qwen3.8-flash-next by a team image (vLLM 0.31 + Spark patches)",
+    "mtp": {"draft_tokens": 2, "acceptance": 62.2, "tokens_per_step": 2.24, "by_position": [71.7, 52.6], "drafted": 7044,
+            "cumulative_acceptance": 68.2, "cumulative_tokens_per_step": 2.36, "old_spark_acceptance": 52.6, "old_spark_tokens_per_step": 2.6},
+    "quality": {"gsm8k": [60, 60], "humaneval": [39, 40], "humaneval_truncated": 1},
+    "coverage": {"all_traces_tokens_M": 17.77, "all_traces": 98.40, "flashnext_output_tokens_k": 89, "flashnext_output": 98.86,
+                 "by_task": {"LiveCodeBench": 98.99, "GSM8K": 98.87, "HumanEval": 98.87, "MMLU-Pro": 98.30, "GPQA Diamond": 97.14},
+                 "top_missed": [" Hmm", " methyl", "^{-", "Potential", "Alternative", " \u0394", "Proceed", "Probably", " Suppose"], "distinct_missed": 6666, "top40_share": 27, "max_acceptance_loss_points": 1.6},
 }
 
 (OUT / "summary.json").write_text(json.dumps({
     "models": MODELS, "tasks": TASKS, "runs": {f"{m}@{b}": r for (m, b), r in RUNS.items()},
     "quality": quality, "pairs": pairs, "speeds": speeds, "qwen38_runs": qwen38_runs,
-    "muse_quant": muse_quant, "mtp_quality": mtp_quality, "prefix_cache": prefix_cache,
+    "muse_quant": muse_quant, "mtp_quality": mtp_quality, "prefix_cache": prefix_cache, "flashnext": flashnext,
 }, indent=1))
 
 # ---------------- question explorer

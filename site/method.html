@@ -48,6 +48,8 @@
 <li>Token counts always come from the server's usage field, never estimated.</li>
 </ul>
 
+<h2 id="draft-vocab">Draft-vocabulary coverage (Spark, run 10)</h2>
+<p>The Spark's Flash-Next image runs MTP speculative decoding with a drafter restricted to 65,536 token ids. To estimate what that restriction costs, <code>tools/draft-vocab-coverage.py</code> loads the id list (<code>tools/draft_vocab_65536.npy</code>), tokenizes every saved reasoning trace and final answer of every run with the Flash-Next tokenizer, and reports the share of tokens inside the set, per run and task, plus the most frequently missed ids. Because the target model verifies every drafted token against its full output head, a token outside the set can only lower acceptance, never change the answer, so coverage bounds the possible loss. The Spark run itself was taken with <code>tools/spark-idle-run.sh</code>, which refuses to start unless the server is idle, samples its request count every 15 s, and snapshots <code>/metrics</code> before and after so the acceptance figures belong to that run alone (<code>tools/metrics-delta.py</code>).</p>
 <h2>Corrections made along the way</h2>
 <ul>
 <li><strong>HumanEval scorer:</strong> the first pass did not keep the problem's helper functions in scope; 4 Muse solutions failed with NameError. Fixed, and every saved answer re-graded. All later runs used the fixed scorer.</li>

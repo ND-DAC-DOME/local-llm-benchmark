@@ -428,6 +428,20 @@
     "4096": 2.299,
     "12288": 9.185
    }
+  },
+  "flashnext_spark": {
+   "decode": 36.23,
+   "ttft": 0.22,
+   "prefill": {
+    "1024": 1546,
+    "4096": 2150,
+    "12288": 2594
+   },
+   "prefill_ttft": {
+    "1024": 0.725,
+    "4096": 1.976,
+    "12288": 4.838
+   }
   }
  },
  "qwen38_runs": {
@@ -542,6 +556,26 @@
      4704,
      4704
     ]
+   },
+   "Spark, vLLM 0.31 + MTP (Flash-Next, a different model; run 10)": {
+    "first": [
+     2.39,
+     7.14,
+     2.43,
+     3.68
+    ],
+    "second": [
+     0.25,
+     0.27,
+     0.27,
+     0.39
+    ],
+    "hits": [
+     5952,
+     19968,
+     5952,
+     5952
+    ]
    }
   },
   "spark_129k": {
@@ -551,5 +585,60 @@
    "tokens": 129072
   },
   "note": "Multi-turn 'first' includes generating 64 tokens; compare the second calls."
+ },
+ "flashnext": {
+  "model": "nvidia/Qwen3.8-Flash-Next-NVFP4 (125B total / 6B active MoE, 4B MTP head), served as qwen3.8-flash-next by a team image (vLLM 0.31 + Spark patches)",
+  "mtp": {
+   "draft_tokens": 2,
+   "acceptance": 62.2,
+   "tokens_per_step": 2.24,
+   "by_position": [
+    71.7,
+    52.6
+   ],
+   "drafted": 7044,
+   "cumulative_acceptance": 68.2,
+   "cumulative_tokens_per_step": 2.36,
+   "old_spark_acceptance": 52.6,
+   "old_spark_tokens_per_step": 2.6
+  },
+  "quality": {
+   "gsm8k": [
+    60,
+    60
+   ],
+   "humaneval": [
+    39,
+    40
+   ],
+   "humaneval_truncated": 1
+  },
+  "coverage": {
+   "all_traces_tokens_M": 17.77,
+   "all_traces": 98.4,
+   "flashnext_output_tokens_k": 89,
+   "flashnext_output": 98.86,
+   "by_task": {
+    "LiveCodeBench": 98.99,
+    "GSM8K": 98.87,
+    "HumanEval": 98.87,
+    "MMLU-Pro": 98.3,
+    "GPQA Diamond": 97.14
+   },
+   "top_missed": [
+    " Hmm",
+    " methyl",
+    "^{-",
+    "Potential",
+    "Alternative",
+    " \u0394",
+    "Proceed",
+    "Probably",
+    " Suppose"
+   ],
+   "distinct_missed": 6666,
+   "top40_share": 27,
+   "max_acceptance_loss_points": 1.6
+  }
  }
 }
